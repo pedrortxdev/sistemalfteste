@@ -15,24 +15,24 @@
 ---
 
 ## Fase 1 — Setup do Projeto
-- [ ] Inicializar projeto Next.js 14 com TypeScript
-  - [ ] `npx create-next-app@latest` com App Router
-  - [ ] Configurar `tsconfig.json` (path aliases `@/`)
-  - [ ] Configurar `next.config.js` (imagens, headers)
-- [ ] Instalar dependências
-  - [ ] `prisma`, `@prisma/client`
-  - [ ] `next-auth@beta` (v5)
-  - [ ] `bcryptjs`, `@types/bcryptjs`
-  - [ ] `zod`
-  - [ ] `signature_pad`
-- [ ] Criar `.env` e `.env.example`
-  - [ ] `DATABASE_URL="file:./dev.db"`
-  - [ ] `NEXTAUTH_SECRET`, `NEXTAUTH_URL`
-  - [ ] `NFE_PROVIDER="mock"`
-- [ ] Criar arquivo `prisma/schema.prisma` com todos os modelos (SQLite, Strings no lugar de enums)
-- [ ] Executar `npx prisma migrate dev` — criar banco SQLite
-- [ ] Criar `prisma/seed.ts` — DONO padrão + cidade teste
-- [ ] Executar seed (`npx prisma db seed`)
+- [x] Inicializar projeto Next.js 14 com TypeScript
+  - [x] `npx create-next-app@latest` com App Router
+  - [x] Configurar `tsconfig.json` (path aliases `@/`)
+  - [x] Configurar `next.config.js` (imagens, headers)
+- [x] Instalar dependências
+  - [x] `prisma`, `@prisma/client`
+  - [x] `next-auth@beta` (v5)
+  - [x] `bcryptjs`, `@types/bcryptjs`
+  - [x] `zod`
+  - [x] `signature_pad`
+- [x] Criar `.env` e `.env.example`
+  - [x] `DATABASE_URL="file:./dev.db"`
+  - [x] `NEXTAUTH_SECRET`, `NEXTAUTH_URL`
+  - [x] `NFE_PROVIDER="mock"`
+- [x] Criar arquivo `prisma/schema.prisma` com todos os modelos (SQLite, Strings no lugar de enums)
+- [x] Executar `npx prisma migrate dev` — criar banco SQLite
+- [x] Criar `prisma/seed.ts` — DONO padrão + cidade teste
+- [x] Executar seed (`npx prisma db seed`)
 
 ---
 
