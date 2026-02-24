@@ -8,7 +8,9 @@
 - [x] Levantar requisitos completos → `requirements.md`
 - [x] Definir arquitetura e design técnico → `design.md`
 - [x] Criar lista de tarefas detalhada → `tasks.md`
-- [ ] Aprovação do planejamento pelo responsável
+- [x] Revisão 1: SQLite, 2 papéis, login automático por cidade, frete
+- [x] Revisão 2: Operador cria/edita clientes, endereço casa vs. obra, solicitação de envio de máquinas
+- [ ] Aprovação final para iniciar implementação
 
 ---
 
@@ -17,37 +19,37 @@
   - [ ] `npx create-next-app@latest` com App Router
   - [ ] Configurar `tsconfig.json` (path aliases `@/`)
   - [ ] Configurar `next.config.js` (imagens, headers)
-- [ ] Configurar Docker Compose para PostgreSQL local
-  - [ ] Criar `docker-compose.yml`
-  - [ ] Verificar conexão com banco
 - [ ] Instalar dependências
   - [ ] `prisma`, `@prisma/client`
   - [ ] `next-auth@beta` (v5)
-  - [ ] `bcryptjs`
+  - [ ] `bcryptjs`, `@types/bcryptjs`
   - [ ] `zod`
   - [ ] `signature_pad`
 - [ ] Criar `.env` e `.env.example`
-- [ ] Criar arquivo `prisma/schema.prisma` com todos os modelos
-- [ ] Executar `prisma migrate dev` — criar tabelas
-- [ ] Criar `prisma/seed.ts` — admin padrão + cidade teste
-- [ ] Executar seed
+  - [ ] `DATABASE_URL="file:./dev.db"`
+  - [ ] `NEXTAUTH_SECRET`, `NEXTAUTH_URL`
+  - [ ] `NFE_PROVIDER="mock"`
+- [ ] Criar arquivo `prisma/schema.prisma` com todos os modelos (SQLite, Strings no lugar de enums)
+- [ ] Executar `npx prisma migrate dev` — criar banco SQLite
+- [ ] Criar `prisma/seed.ts` — DONO padrão + cidade teste
+- [ ] Executar seed (`npx prisma db seed`)
 
 ---
 
 ## Fase 2 — Autenticação e Autorização
 - [ ] Configurar NextAuth v5
-  - [ ] Criar `src/lib/auth.ts` (providers, callbacks)
+  - [ ] Criar `src/lib/auth.ts` (credentials provider, callbacks JWT)
   - [ ] Criar `src/app/api/auth/[...nextauth]/route.ts`
-  - [ ] Configurar JWT com role e cityId
+  - [ ] JWT com: role, cityId, cityName (cidade fixa do cadastro)
 - [ ] Criar middleware de proteção (`src/middleware.ts`)
   - [ ] Redirecionar não-autenticados para `/login`
   - [ ] Redirecionar autenticados de `/login` para `/dashboard`
 - [ ] Criar sistema de permissões (`src/lib/permissions.ts`)
-  - [ ] Mapear permissões por papel (ADMIN, GERENTE, OPERADOR)
-  - [ ] Função `hasPermission(role, permission)`
+  - [ ] Dois papéis: DONO (tudo) e OPERADOR (operacional)
+  - [ ] Permissões: clients:write, machines:write, transfers:request, orders, maintenance, cashflow, nfe:view, reports, csv
+  - [ ] DONO-only: cities:manage, users:manage, machines:transfer, transfers:approve, nfe:config
 - [ ] Criar página de login (`src/app/login/page.tsx`)
-  - [ ] Formulário email/senha
-  - [ ] Seletor de cidade (para ADMIN)
+  - [ ] Formulário: apenas email + senha (sem seletor de cidade)
   - [ ] Feedback de erro
   - [ ] Responsivo mobile
 
@@ -69,51 +71,56 @@
   - [ ] `Pagination.tsx` — via query params, SSR
 - [ ] Criar layout admin (`src/app/(admin)/layout.tsx`)
   - [ ] `Sidebar.tsx` — desktop, links de navegação com ícones SVG
-  - [ ] `Header.tsx` — nome da cidade, nome do usuário, logout
+  - [ ] `Header.tsx` — nome da cidade (automático), nome do usuário, logout
   - [ ] `MobileNav.tsx` — bottom navigation, 5 ícones
-  - [ ] `CitySelector.tsx` — para ADMIN trocar de cidade ativa
+  - [ ] Para DONO: seletor de cidade no header para navegar entre cidades
 - [ ] Verificar responsividade em 360px, 768px, 1024px
 
 ---
 
-## Fase 4 — Módulo de Cidades (Admin)
+## Fase 4 — Módulo de Cidades (DONO only)
 - [ ] API Route: `src/app/api/cities/route.ts`
-  - [ ] GET — listar cidades (admin only)
+  - [ ] GET — listar cidades (DONO only)
   - [ ] POST — criar cidade
   - [ ] PUT — editar cidade
   - [ ] DELETE — desativar cidade (soft delete)
 - [ ] Página: `src/app/(admin)/cidades/page.tsx`
   - [ ] Tabela com nome, CNPJ, status
   - [ ] Formulário de criação/edição (modal ou inline)
-  - [ ] Proteção de permissão (apenas ADMIN)
+  - [ ] Proteção de permissão (apenas DONO)
 
 ---
 
-## Fase 5 — Módulo de Usuários (Admin)
+## Fase 5 — Módulo de Usuários do Sistema (DONO only)
 - [ ] API Route: `src/app/api/users/route.ts`
-  - [ ] GET — listar usuários (admin only)
-  - [ ] POST — criar usuário (hash de senha)
+  - [ ] GET — listar usuários (DONO only)
+  - [ ] POST — criar usuário (hash de senha, vincular a cidade fixa)
   - [ ] PUT — editar usuário
   - [ ] PATCH — ativar/desativar
 - [ ] Página: `src/app/(admin)/usuarios/page.tsx`
-  - [ ] Tabela com nome, email, papel, cidade, status
+  - [ ] Tabela com nome, email, papel (DONO/OPERADOR), cidade, status
   - [ ] Formulário de criação com seleção de papel e cidade
-  - [ ] Proteção de permissão (apenas ADMIN)
+  - [ ] Proteção de permissão (apenas DONO)
 
 ---
 
 ## Fase 6 — Módulo de Máquinas (Estoque)
 - [ ] API Routes: `src/app/api/machines/route.ts` e `[id]/route.ts`
-  - [ ] GET — listar com filtros (status, categoria, cidade)
+  - [ ] GET — listar com filtros (status, categoria) — filtra por cidade do usuário
   - [ ] GET /:id — detalhes com histórico
-  - [ ] POST — criar máquina
+  - [ ] POST — criar máquina (na cidade do usuário)
   - [ ] PUT — editar máquina
   - [ ] PATCH — alterar status (com registro em MachineStatusHistory)
-  - [ ] POST /transfer — transferir para outra cidade
+  - [ ] POST /transfer — transferir para outra cidade (DONO only)
+- [ ] API Routes: `src/app/api/transfers/route.ts`
+  - [ ] GET — listar solicitações (OPERADOR: as suas; DONO: todas pendentes)
+  - [ ] POST — criar solicitação de envio (OPERADOR solicita máquina para sua cidade)
+  - [ ] PATCH — aprovar/rejeitar solicitação (DONO only) → se aprovada, transfere máquina
 - [ ] Página: `src/app/(admin)/maquinas/page.tsx`
   - [ ] Tabela com nome, modelo, status (badge), preço, total de aluguéis
   - [ ] Filtros: status, categoria
   - [ ] Botões: nova máquina, ver detalhes, alterar status
+  - [ ] Botão: "Solicitar envio" (OPERADOR pode pedir máquina de outra cidade)
 - [ ] Página: `src/app/(admin)/maquinas/[id]/page.tsx`
   - [ ] Dados completos da máquina
   - [ ] Histórico de status
@@ -122,20 +129,24 @@
 - [ ] Página: `src/app/(admin)/maquinas/nova/page.tsx`
   - [ ] Formulário com upload de foto (opcional)
 - [ ] Upload de foto comprimida (< 200 KB no client)
+- [ ] Seção de solicitações de envio (para DONO: aprovar/rejeitar pendentes)
 
 ---
 
 ## Fase 7 — Módulo de Clientes
 - [ ] API Route: `src/app/api/clients/route.ts`
   - [ ] GET — listar/buscar por nome ou CPF
-  - [ ] POST — criar cliente
-  - [ ] PUT — editar cliente
+  - [ ] POST — criar cliente (OPERADOR e DONO)
+  - [ ] PUT — editar cliente (OPERADOR e DONO)
 - [ ] Página: `src/app/(admin)/clientes/page.tsx`
-  - [ ] Tabela com nome, CPF/CNPJ, telefone
+  - [ ] Tabela com nome, CPF/CNPJ, telefone, endereço de casa
   - [ ] Busca rápida
 - [ ] Página: `src/app/(admin)/clientes/[id]/page.tsx`
-  - [ ] Dados do cliente
-  - [ ] Histórico de aluguéis
+  - [ ] Dados do cliente (incluindo endereço residencial)
+  - [ ] Histórico de aluguéis (com endereço da obra de cada pedido)
+- [ ] Formulário de cliente:
+  - [ ] Nome, CPF/CNPJ, telefone, email
+  - [ ] **Endereço residencial (casa)** — campo fixo no cadastro
 
 ---
 
@@ -155,26 +166,29 @@
 
 ---
 
-## Fase 9 — Módulo de Pedidos (Aluguel)
+## Fase 9 — Módulo de Pedidos (Aluguel + Frete)
 - [ ] API Routes: `src/app/api/orders/route.ts` e `[id]/route.ts`
   - [ ] GET — listar pedidos (filtro por status, cidade, cliente)
-  - [ ] GET /:id — detalhes com itens
-  - [ ] POST — criar pedido (com itens, cálculo automático)
+  - [ ] GET /:id — detalhes com itens, frete e endereço da obra
+  - [ ] POST — criar pedido (com itens + frete + endereço da obra, cálculo automático)
   - [ ] PATCH — alterar status (ativar, finalizar, cancelar)
   - [ ] POST /signature — upload de assinatura
 - [ ] Página: `src/app/(admin)/pedidos/page.tsx`
-  - [ ] Tabela: cliente, máquinas, valor, status (badge), datas
+  - [ ] Tabela: cliente, máquinas, valor total (aluguel + frete), status (badge), datas
   - [ ] Filtro por status
 - [ ] Página: `src/app/(admin)/pedidos/novo/page.tsx`
   - [ ] Formulário multi-step:
     1. Selecionar/cadastrar cliente
     2. Selecionar máquina(s) disponíveis
-    3. Definir datas e calcular valor
-    4. Gerar contrato + colher assinatura digital
+    3. Definir datas e calcular valor de aluguel
+    4. **Endereço da obra** (pré-preenche com endereço do cliente, mas editável)
+    5. **Frete**: valor do frete
+    6. Resumo (aluguel + frete = total)
+    7. Gerar contrato + colher assinatura digital
   - [ ] Auto-seleção de máquinas disponíveis apenas
-  - [ ] Cálculo em tempo real (dias × preço)
+  - [ ] Cálculo em tempo real (dias × preço + frete)
 - [ ] Página: `src/app/(admin)/pedidos/[id]/page.tsx`
-  - [ ] Detalhes completos do pedido
+  - [ ] Detalhes completos (incluindo endereço da obra e frete)
   - [ ] Visualizar assinatura
   - [ ] Ações: ativar, finalizar, cancelar
 - [ ] Componente `SignaturePad.tsx`
@@ -183,7 +197,7 @@
   - [ ] Exportar PNG base64
   - [ ] Botões: limpar, confirmar
 - [ ] Integração automática:
-  - [ ] Ao ativar: máquina(s) → `ALUGADA`, entrada no caixa
+  - [ ] Ao ativar: máquina(s) → `ALUGADA`, entrada no caixa (aluguel + frete separados)
   - [ ] Ao finalizar: máquina(s) → `DISPONIVEL`
   - [ ] Ao cancelar: reverter status das máquinas
 
@@ -202,8 +216,9 @@
   - [ ] Botão: exportar CSV
   - [ ] Botão: nova movimentação manual
 - [ ] Movimentações automáticas:
-  - [ ] Criar ENTRADA ao ativar pedido
-  - [ ] Criar SAIDA ao registrar manutenção
+  - [ ] Criar ENTRADA (categoria "ALUGUEL") ao ativar pedido
+  - [ ] Criar ENTRADA (categoria "FRETE") ao ativar pedido com frete > 0
+  - [ ] Criar SAIDA (categoria "MANUTENCAO") ao registrar manutenção
 - [ ] Exportação CSV
 
 ---
@@ -230,16 +245,16 @@
 
 ## Fase 12 — Dashboard
 - [ ] API Route: `src/app/api/dashboard/route.ts`
-  - [ ] GET — dados consolidados da cidade (ou todas para ADMIN)
+  - [ ] GET — dados consolidados da cidade (ou todas para DONO)
 - [ ] Página: `src/app/(admin)/dashboard/page.tsx`
   - [ ] Cards KPI:
     - [ ] Máquinas disponíveis / alugadas / manutenção / estragadas
-    - [ ] Faturamento do dia / semana / mês
+    - [ ] Faturamento do dia / semana / mês (inclui frete)
     - [ ] Custo de manutenção no período
     - [ ] NFes pendentes
   - [ ] Top 5 máquinas mais alugadas (barra CSS)
   - [ ] Pedidos ativos (lista simples)
-  - [ ] Para ADMIN: seletor de cidade ou visão consolidada
+  - [ ] Para DONO: visão consolidada + solicitações de envio pendentes
 
 ---
 
@@ -247,9 +262,9 @@
 - [ ] API Route: `src/app/api/reports/route.ts`
   - [ ] GET /machines — relatório de máquinas (mais alugadas, custos)
   - [ ] GET /maintenance — relatório de manutenção por período
-  - [ ] GET /revenue — faturamento por cidade/período
+  - [ ] GET /revenue — faturamento por cidade/período (aluguel + frete)
 - [ ] Página: `src/app/(admin)/relatorios/page.tsx`
-  - [ ] Seletor: tipo de relatório, cidade, período
+  - [ ] Seletor: tipo de relatório, período
   - [ ] Tabela com dados
   - [ ] Botão: exportar CSV
 
@@ -257,22 +272,25 @@
 
 ## Fase 14 — Audit Log
 - [ ] Implementar middleware de logging (`src/lib/audit.ts`)
-  - [ ] Registrar ações: login, CRUD máquinas, pedidos, caixa, NFe
+  - [ ] Registrar ações: login, CRUD máquinas, pedidos, caixa, NFe, transferências
   - [ ] Capturar: userId, action, entity, entityId, IP, timestamp
 - [ ] API Route: `src/app/api/audit/route.ts`
-  - [ ] GET — listar logs (admin only, filtro por entidade/período)
+  - [ ] GET — listar logs (DONO only, filtro por entidade/período)
 - [ ] Acessível em painel admin (opcional como subpágina de relatórios)
 
 ---
 
 ## Fase 15 — Testes e Validação
-- [ ] Testar fluxo completo de login (3 papéis)
+- [ ] Testar fluxo completo de login (2 papéis: DONO e OPERADOR)
+- [ ] Verificar que operador vê apenas dados da sua cidade
+- [ ] Testar CRUD de clientes (operador cria/edita, endereço de casa)
 - [ ] Testar CRUD de todos os módulos
-- [ ] Testar fluxo de aluguel completo (criar → assinar → ativar → finalizar)
+- [ ] Testar fluxo de aluguel completo (criar → endereço obra → frete → assinar → ativar → finalizar)
+- [ ] Testar solicitação de envio de máquina (operador solicita → DONO aprova)
 - [ ] Testar assinatura digital em celular (toque)
 - [ ] Testar fluxo de manutenção (estragada → consertada → impacto no caixa)
 - [ ] Testar geração de NFe (mock)
-- [ ] Testar permissões (operador não acessa rotas de admin)
+- [ ] Testar permissões (operador não acessa cidades/usuários)
 - [ ] Testar responsividade (360px, 768px, 1024px)
 - [ ] Testar performance (Lighthouse mobile)
 - [ ] Validar bundle size por rota (< 100 KB)
@@ -301,10 +319,10 @@
 | 3    | ⬜     | Layout e Componentes |
 | 4    | ⬜     | Módulo Cidades |
 | 5    | ⬜     | Módulo Usuários |
-| 6    | ⬜     | Módulo Máquinas |
-| 7    | ⬜     | Módulo Clientes |
+| 6    | ⬜     | Módulo Máquinas + Solicitações de Envio |
+| 7    | ⬜     | Módulo Clientes (endereço casa/obra) |
 | 8    | ⬜     | Módulo Manutenção |
-| 9    | ⬜     | Módulo Pedidos |
+| 9    | ⬜     | Módulo Pedidos + Frete + Endereço Obra |
 | 10   | ⬜     | Fluxo de Caixa |
 | 11   | ⬜     | NFe |
 | 12   | ⬜     | Dashboard |

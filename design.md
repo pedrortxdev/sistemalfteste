@@ -22,7 +22,7 @@
 ├─────────────────────────────────────────────────┤
 │               Prisma ORM                        │
 ├─────────────────────────────────────────────────┤
-│              PostgreSQL                         │
+│              SQLite (arquivo local)              │
 └─────────────────────────────────────────────────┘
 ```
 
@@ -34,14 +34,15 @@
 projeto-lf/
 ├── prisma/
 │   ├── schema.prisma          # Modelos do banco
-│   ├── seed.ts                # Dados iniciais (admin, cidades teste)
+│   ├── seed.ts                # Dados iniciais (dono, cidades teste)
+│   ├── dev.db                 # Banco SQLite (gerado)
 │   └── migrations/            # Migrações auto-geradas
 ├── src/
 │   ├── app/
 │   │   ├── layout.tsx         # Layout raiz (meta, fontes)
 │   │   ├── page.tsx           # Redirect → /login
 │   │   ├── login/
-│   │   │   └── page.tsx       # Página de login
+│   │   │   └── page.tsx       # Página de login (email + senha, sem seletor de cidade)
 │   │   ├── (admin)/           # Route group autenticado
 │   │   │   ├── layout.tsx     # Sidebar + Header
 │   │   │   ├── dashboard/
@@ -71,9 +72,9 @@ projeto-lf/
 │   │   │   │   └── [id]/
 │   │   │   │       └── page.tsx
 │   │   │   ├── cidades/
-│   │   │   │   └── page.tsx          # Admin only
+│   │   │   │   └── page.tsx          # DONO only
 │   │   │   ├── usuarios/
-│   │   │   │   └── page.tsx          # Admin only
+│   │   │   │   └── page.tsx          # DONO only
 │   │   │   └── relatorios/
 │   │   │       └── page.tsx
 │   │   └── api/
@@ -113,11 +114,10 @@ projeto-lf/
 │   │   ├── layout/
 │   │   │   ├── Sidebar.tsx
 │   │   │   ├── Header.tsx
-│   │   │   ├── MobileNav.tsx
-│   │   │   └── CitySelector.tsx
+│   │   │   └── MobileNav.tsx
 │   │   ├── forms/
 │   │   │   ├── MachineForm.tsx
-│   │   │   ├── OrderForm.tsx
+│   │   │   ├── OrderForm.tsx      # Inclui campos de frete
 │   │   │   ├── MaintenanceForm.tsx
 │   │   │   ├── CashFlowForm.tsx
 │   │   │   └── UserForm.tsx
@@ -132,7 +132,6 @@ projeto-lf/
 │   │   ├── validators.ts          # Validação com Zod
 │   │   └── utils.ts               # Helpers (formatCurrency, etc.)
 │   ├── hooks/
-│   │   ├── useCity.ts             # Context da cidade ativa
 │   │   └── usePermission.ts       # Hook de permissão
 │   ├── types/
 │   │   └── index.ts               # Types compartilhados
@@ -146,9 +145,10 @@ projeto-lf/
 ├── .env.example
 ├── next.config.js
 ├── package.json
-├── tsconfig.json
-└── docker-compose.yml             # PostgreSQL local
+└── tsconfig.json
 ```
+
+> **Nota**: Sem `docker-compose.yml` — SQLite não precisa de serviço externo. Sem `CitySelector.tsx` — operador vê sua cidade automaticamente, DONO navega via seletor no header.
 
 ---
 
@@ -160,57 +160,20 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "sqlite"
   url      = env("DATABASE_URL")
 }
 
-enum Role {
-  ADMIN
-  GERENTE
-  OPERADOR
-}
-
-enum MachineStatus {
-  DISPONIVEL
-  ALUGADA
-  MANUTENCAO
-  ESTRAGADA
-  INATIVA
-}
-
-enum OrderStatus {
-  RASCUNHO
-  AGUARDANDO_ASSINATURA
-  ATIVO
-  FINALIZADO
-  CANCELADO
-}
-
-enum MaintenanceType {
-  PREVENTIVA
-  CORRETIVA
-}
-
-enum CashFlowType {
-  ENTRADA
-  SAIDA
-}
-
-enum NFeStatus {
-  PENDENTE
-  EMITIDA
-  ERRO
-  CANCELADA
-}
+// SQLite não suporta enums nativos — usamos String com validação no app
 
 model User {
   id           String    @id @default(cuid())
   name         String
   email        String    @unique
   passwordHash String
-  role         Role      @default(OPERADOR)
-  cityId       String?
-  city         City?     @relation(fields: [cityId], references: [id])
+  role         String    @default("OPERADOR")   // "DONO" | "OPERADOR"
+  cityId       String
+  city         City      @relation(fields: [cityId], references: [id])
   active       Boolean   @default(true)
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
@@ -237,58 +200,60 @@ model City {
   orders       RentalOrder[]
   cashFlows    CashFlow[]
   nfes         NFe[]
+  transfersFrom TransferRequest[] @relation("fromCity")
+  transfersTo   TransferRequest[] @relation("toCity")
 
   @@index([cnpj])
 }
 
 model Machine {
-  id           String        @id @default(cuid())
+  id           String   @id @default(cuid())
   name         String
   model        String?
-  serialNumber String?       @unique
+  serialNumber String?  @unique
   category     String
   dailyPrice   Float
-  status       MachineStatus @default(DISPONIVEL)
+  status       String   @default("DISPONIVEL")  // DISPONIVEL | ALUGADA | MANUTENCAO | ESTRAGADA | INATIVA
   cityId       String
-  city         City          @relation(fields: [cityId], references: [id])
+  city         City     @relation(fields: [cityId], references: [id])
   photoUrl     String?
-  totalRentals Int           @default(0)
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
+  totalRentals Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
-  maintenanceLogs MaintenanceLog[]
-  rentalItems     RentalItem[]
-  statusHistory   MachineStatusHistory[]
+  maintenanceLogs  MaintenanceLog[]
+  rentalItems      RentalItem[]
+  statusHistory    MachineStatusHistory[]
+  transferRequests TransferRequest[]
 
   @@index([cityId, status])
   @@index([category])
-  @@index([totalRentals(sort: Desc)])
 }
 
 model MachineStatusHistory {
-  id        String        @id @default(cuid())
+  id        String   @id @default(cuid())
   machineId String
-  machine   Machine       @relation(fields: [machineId], references: [id])
-  oldStatus MachineStatus
-  newStatus MachineStatus
+  machine   Machine  @relation(fields: [machineId], references: [id])
+  oldStatus String
+  newStatus String
   changedBy String
-  changedAt DateTime      @default(now())
+  changedAt DateTime @default(now())
   notes     String?
 
   @@index([machineId])
 }
 
 model MaintenanceLog {
-  id          String          @id @default(cuid())
+  id          String    @id @default(cuid())
   machineId   String
-  machine     Machine         @relation(fields: [machineId], references: [id])
-  type        MaintenanceType
+  machine     Machine   @relation(fields: [machineId], references: [id])
+  type        String    // "PREVENTIVA" | "CORRETIVA"
   description String
   cost        Float
-  date        DateTime        @default(now())
+  date        DateTime  @default(now())
   resolvedAt  DateTime?
   resolvedById String?
-  resolvedBy  User?           @relation("resolvedBy", fields: [resolvedById], references: [id])
+  resolvedBy  User?     @relation("resolvedBy", fields: [resolvedById], references: [id])
 
   cashFlow    CashFlow?
 
@@ -297,13 +262,13 @@ model MaintenanceLog {
 }
 
 model Client {
-  id       String  @id @default(cuid())
-  name     String
-  cpfCnpj  String  @unique
-  phone    String
-  address  String?
-  email    String?
-  createdAt DateTime @default(now())
+  id          String   @id @default(cuid())
+  name        String
+  cpfCnpj     String   @unique
+  phone       String
+  homeAddress String?  // Endereço residencial (casa) — fixo no cadastro
+  email       String?
+  createdAt   DateTime @default(now())
 
   orders   RentalOrder[]
 
@@ -311,21 +276,25 @@ model Client {
 }
 
 model RentalOrder {
-  id           String      @id @default(cuid())
-  clientId     String
-  client       Client      @relation(fields: [clientId], references: [id])
-  cityId       String
-  city         City        @relation(fields: [cityId], references: [id])
-  createdById  String
-  createdBy    User        @relation(fields: [createdById], references: [id])
-  status       OrderStatus @default(RASCUNHO)
-  totalValue   Float       @default(0)
-  startDate    DateTime
-  endDate      DateTime
-  signatureUrl String?
-  notes        String?
-  createdAt    DateTime    @default(now())
-  updatedAt    DateTime    @updatedAt
+  id              String   @id @default(cuid())
+  clientId        String
+  client          Client   @relation(fields: [clientId], references: [id])
+  cityId          String
+  city            City     @relation(fields: [cityId], references: [id])
+  createdById     String
+  createdBy       User     @relation(fields: [createdById], references: [id])
+  status          String   @default("RASCUNHO")  // RASCUNHO | AGUARDANDO_ASSINATURA | ATIVO | FINALIZADO | CANCELADO
+  totalValue      Float    @default(0)
+  startDate       DateTime
+  endDate         DateTime
+  signatureUrl    String?
+  notes           String?
+  // --- Frete ---
+  freightValue    Float    @default(0)
+  // --- Endereço da obra (diferente do endereço residencial do cliente) ---
+  jobSiteAddress  String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 
   items       RentalItem[]
   cashFlows   CashFlow[]
@@ -337,7 +306,7 @@ model RentalOrder {
 }
 
 model RentalItem {
-  id         String @id @default(cuid())
+  id         String      @id @default(cuid())
   orderId    String
   order      RentalOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
   machineId  String
@@ -350,34 +319,34 @@ model RentalItem {
 }
 
 model CashFlow {
-  id              String       @id @default(cuid())
+  id              String          @id @default(cuid())
   cityId          String
-  city            City         @relation(fields: [cityId], references: [id])
-  type            CashFlowType
-  category        String
+  city            City            @relation(fields: [cityId], references: [id])
+  type            String          // "ENTRADA" | "SAIDA"
+  category        String          // "ALUGUEL" | "FRETE" | "MANUTENCAO" | "DESPESA" | "OUTRO"
   amount          Float
   description     String?
   orderId         String?
-  order           RentalOrder? @relation(fields: [orderId], references: [id])
-  maintenanceId   String?      @unique
+  order           RentalOrder?    @relation(fields: [orderId], references: [id])
+  maintenanceId   String?         @unique
   maintenance     MaintenanceLog? @relation(fields: [maintenanceId], references: [id])
-  date            DateTime     @default(now())
-  createdAt       DateTime     @default(now())
+  date            DateTime        @default(now())
+  createdAt       DateTime        @default(now())
 
   @@index([cityId, date])
   @@index([type])
 }
 
 model NFe {
-  id           String    @id @default(cuid())
+  id           String   @id @default(cuid())
   cityId       String
-  city         City      @relation(fields: [cityId], references: [id])
+  city         City     @relation(fields: [cityId], references: [id])
   date         DateTime
-  status       NFeStatus @default(PENDENTE)
+  status       String   @default("PENDENTE")  // PENDENTE | EMITIDA | ERRO | CANCELADA
   xmlUrl       String?
   errorMessage String?
-  retryCount   Int       @default(0)
-  createdAt    DateTime  @default(now())
+  retryCount   Int      @default(0)
+  createdAt    DateTime @default(now())
 
   items        NFeItem[]
 
@@ -396,6 +365,26 @@ model NFeItem {
   @@index([nfeId])
 }
 
+model TransferRequest {
+  id            String   @id @default(cuid())
+  machineId     String
+  machine       Machine  @relation(fields: [machineId], references: [id])
+  fromCityId    String
+  fromCity      City     @relation("fromCity", fields: [fromCityId], references: [id])
+  toCityId      String
+  toCity        City     @relation("toCity", fields: [toCityId], references: [id])
+  requestedById String
+  status        String   @default("PENDENTE")  // PENDENTE | APROVADA | REJEITADA
+  approvedById  String?
+  notes         String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([status])
+  @@index([toCityId])
+  @@index([fromCityId])
+}
+
 model AuditLog {
   id        String   @id @default(cuid())
   userId    String
@@ -412,6 +401,8 @@ model AuditLog {
   @@index([timestamp])
 }
 ```
+
+> **Nota SQLite**: Não suporta `enum` nativamente. Usamos `String` com validação via Zod no application layer. Não suporta `@@index(sort: Desc)` — ordenação feita na query. Não é necessário `docker-compose.yml`.
 
 ---
 
@@ -432,24 +423,26 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       credentials: {
         email: { label: "Email", type: "email" },
         password: { label: "Senha", type: "password" },
-        cityId: { label: "Cidade", type: "text" },
       },
       async authorize(credentials) {
         const user = await prisma.user.findUnique({
-          where: { email: credentials.email, active: true },
+          where: { email: credentials.email as string, active: true },
           include: { city: true },
         });
         if (!user) return null;
-        const valid = await bcrypt.compare(credentials.password, user.passwordHash);
+        const valid = await bcrypt.compare(
+          credentials.password as string,
+          user.passwordHash
+        );
         if (!valid) return null;
-        // Admin pode escolher qualquer cidade; outros usam a própria
+        // Cidade é SEMPRE a do cadastro do usuário — sem seleção
         return {
           id: user.id,
           name: user.name,
           email: user.email,
           role: user.role,
-          cityId: user.role === "ADMIN" ? credentials.cityId : user.cityId,
-          cityName: user.city?.name,
+          cityId: user.cityId,
+          cityName: user.city.name,
         };
       },
     }),
@@ -460,12 +453,14 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (user) {
         token.role = user.role;
         token.cityId = user.cityId;
+        token.cityName = user.cityName;
       }
       return token;
     },
     session({ session, token }) {
-      session.user.role = token.role;
-      session.user.cityId = token.cityId;
+      session.user.role = token.role as string;
+      session.user.cityId = token.cityId as string;
+      session.user.cityName = token.cityName as string;
       return session;
     },
   },
@@ -502,35 +497,49 @@ export const config = {
 type Permission =
   | "cities:manage"
   | "users:manage"
+  | "clients:write"
   | "machines:write"
   | "machines:transfer"
+  | "transfers:request"
+  | "transfers:approve"
   | "orders:create"
   | "orders:cancel"
   | "maintenance:write"
   | "cashflow:write"
+  | "cashflow:read"
   | "nfe:view"
   | "nfe:config"
   | "reports:view"
   | "export:csv";
 
 const ROLE_PERMISSIONS: Record<string, Permission[]> = {
-  ADMIN: [/* todas */],
-  GERENTE: [
-    "machines:write", "machines:transfer",
-    "orders:create", "orders:cancel",
-    "maintenance:write", "cashflow:write",
-    "nfe:view", "reports:view", "export:csv",
-  ],
+  DONO: [/* todas — verificado via shortcut */],
   OPERADOR: [
-    "orders:create", "maintenance:write",
+    "clients:write",
+    "machines:write",
+    "transfers:request",
+    "orders:create",
+    "orders:cancel",
+    "maintenance:write",
+    "cashflow:write",
+    "cashflow:read",
+    "nfe:view",
+    "reports:view",
+    "export:csv",
   ],
 };
 
 export function hasPermission(role: string, permission: Permission): boolean {
-  if (role === "ADMIN") return true;
+  if (role === "DONO") return true;  // DONO tem acesso a tudo
   return ROLE_PERMISSIONS[role]?.includes(permission) ?? false;
 }
+
+export function isDono(role: string): boolean {
+  return role === "DONO";
+}
 ```
+
+> **Nota**: O OPERADOR pode: CRUD clientes, CRUD máquinas, solicitar envio de máquinas, criar/cancelar pedidos, manutenção, caixa, NFe (ver), relatórios, CSV. Restritos ao DONO: cidades, usuários do sistema, transferência direta, aprovação de solicitações, config NFe.
 
 ---
 
@@ -598,7 +607,6 @@ export function hasPermission(role: string, permission: Permission): boolean {
 | Tabelas        | Não        | SSR puro, paginação via query params  |
 | Formulários    | Mínimo     | Validação HTML5 + submit server action|
 | SignaturePad   | Sim        | Canvas obrigatório (~8 KB)            |
-| CitySelector   | Sim        | Dropdown interativo (~2 KB)           |
 | Modal          | Sim        | Confirmações (~3 KB)                  |
 | Filtros        | Não        | Via query params, `<form>` nativo     |
 
@@ -703,7 +711,9 @@ export async function GET(req: Request) {
   if (!session) return Response.json({ error: "Unauthorized" }, { status: 401 });
 
   const { searchParams } = new URL(req.url);
-  const cityId = session.user.role === "ADMIN"
+  // Operador: sempre filtra pela cidade do usuário
+  // Dono: pode filtrar por qualquer cidade via query param
+  const cityId = session.user.role === "DONO"
     ? searchParams.get("cityId") || session.user.cityId
     : session.user.cityId;
 
@@ -736,30 +746,11 @@ export async function POST(req: Request) {
 
 ---
 
-## 10. Docker / Dev Environment
-
-```yaml
-# docker-compose.yml
-version: "3.8"
-services:
-  db:
-    image: postgres:16-alpine
-    environment:
-      POSTGRES_USER: lf
-      POSTGRES_PASSWORD: lf_dev_2024
-      POSTGRES_DB: lf_rental
-    ports:
-      - "5432:5432"
-    volumes:
-      - pgdata:/var/lib/postgresql/data
-
-volumes:
-  pgdata:
-```
+## 10. Dev Environment
 
 ```env
 # .env
-DATABASE_URL="postgresql://lf:lf_dev_2024@localhost:5432/lf_rental"
+DATABASE_URL="file:./prisma/dev.db"
 NEXTAUTH_SECRET="gerar-com-openssl-rand-base64-32"
 NEXTAUTH_URL="http://localhost:3000"
 NFE_PROVIDER="mock"
@@ -767,13 +758,18 @@ NFE_API_KEY=""
 NFE_API_URL=""
 ```
 
+> **Sem Docker**: SQLite roda como arquivo local. Basta `npx prisma migrate dev` para criar o banco.
+
 ---
 
 ## 11. Decisões Técnicas Importantes
 
 | Decisão                              | Justificativa                                             |
 | ------------------------------------ | --------------------------------------------------------- |
-| PostgreSQL ao invés de SQLite        | Multi-usuário simultâneo, índices compostos, JSON support  |
+| **SQLite** ao invés de PostgreSQL    | Sem Docker, sem serviço externo, deploy simples, arquivo único |
+| 2 papéis (DONO/OPERADOR)            | Simplifica permissões — operador faz quase tudo, dono controla admin |
+| Cidade fixa por usuário             | Login simplificado — sem seletor, sem confusão             |
+| Frete no pedido                      | Valor e endereço direto no RentalOrder, soma no total      |
 | CSS Modules (sem Tailwind)           | Bundle menor, sem purge, controle total                    |
 | NextAuth v5 com JWT                  | Sem sessão no server, escalável, sem Redis                 |
 | Zod para validação                   | Type-safe, integra com TypeScript, leve (~10 KB)           |
@@ -783,3 +779,4 @@ NFE_API_URL=""
 | signature_pad (única lib pesada)     | Necessidade legal de assinatura, sem alternativa mais leve |
 | Mock NFe inicialmente                | Integração SEFAZ requer certificado — paralelo             |
 | CRON via API route + secret          | Funciona em Vercel e bare-metal igual                      |
+| Strings ao invés de enums            | SQLite não suporta enum nativamente — validação via Zod    |
