@@ -1,0 +1,245 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// SQLite não suporta enums nativos — usamos String com validação no app
+
+model User {
+  id           String    @id @default(cuid())
+  name         String
+  email        String    @unique
+  passwordHash String
+  role         String    @default("OPERADOR")   // "DONO" | "OPERADOR"
+  cityId       String
+  city         City      @relation(fields: [cityId], references: [id])
+  active       Boolean   @default(true)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  orders       RentalOrder[]
+  auditLogs    AuditLog[]
+  maintenanceResolved MaintenanceLog[] @relation("resolvedBy")
+
+  @@index([email])
+  @@index([cityId])
+}
+
+model City {
+  id                String    @id @default(cuid())
+  name              String
+  address           String?
+  cnpj              String    @unique
+  inscricaoEstadual String?
+  active            Boolean   @default(true)
+  createdAt         DateTime  @default(now())
+
+  users        User[]
+  machines     Machine[]
+  orders       RentalOrder[]
+  cashFlows    CashFlow[]
+  nfes         NFe[]
+  transfersFrom TransferRequest[] @relation("fromCity")
+  transfersTo   TransferRequest[] @relation("toCity")
+
+  @@index([cnpj])
+}
+
+model Machine {
+  id           String   @id @default(cuid())
+  name         String
+  model        String?
+  serialNumber String?  @unique
+  category     String
+  dailyPrice   Float
+  status       String   @default("DISPONIVEL")  // DISPONIVEL | ALUGADA | MANUTENCAO | ESTRAGADA | INATIVA
+  cityId       String
+  city         City     @relation(fields: [cityId], references: [id])
+  photoUrl     String?
+  totalRentals Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  maintenanceLogs  MaintenanceLog[]
+  rentalItems      RentalItem[]
+  statusHistory    MachineStatusHistory[]
+  transferRequests TransferRequest[]
+
+  @@index([cityId, status])
+  @@index([category])
+}
+
+model MachineStatusHistory {
+  id        String   @id @default(cuid())
+  machineId String
+  machine   Machine  @relation(fields: [machineId], references: [id])
+  oldStatus String
+  newStatus String
+  changedBy String
+  changedAt DateTime @default(now())
+  notes     String?
+
+  @@index([machineId])
+}
+
+model MaintenanceLog {
+  id          String    @id @default(cuid())
+  machineId   String
+  machine     Machine   @relation(fields: [machineId], references: [id])
+  type        String    // "PREVENTIVA" | "CORRETIVA"
+  description String
+  cost        Float
+  date        DateTime  @default(now())
+  resolvedAt  DateTime?
+  resolvedById String?
+  resolvedBy  User?     @relation("resolvedBy", fields: [resolvedById], references: [id])
+
+  cashFlow    CashFlow?
+
+  @@index([machineId])
+  @@index([date])
+}
+
+model Client {
+  id          String   @id @default(cuid())
+  name        String
+  cpfCnpj     String   @unique
+  phone       String
+  homeAddress String?  // Endereço residencial (casa) — fixo no cadastro
+  email       String?
+  createdAt   DateTime @default(now())
+
+  orders   RentalOrder[]
+
+  @@index([cpfCnpj])
+}
+
+model RentalOrder {
+  id              String   @id @default(cuid())
+  clientId        String
+  client          Client   @relation(fields: [clientId], references: [id])
+  cityId          String
+  city            City     @relation(fields: [cityId], references: [id])
+  createdById     String
+  createdBy       User     @relation(fields: [createdById], references: [id])
+  status          String   @default("RASCUNHO")  // RASCUNHO | AGUARDANDO_ASSINATURA | ATIVO | FINALIZADO | CANCELADO
+  totalValue      Float    @default(0)
+  startDate       DateTime
+  endDate         DateTime
+  signatureUrl    String?
+  notes           String?
+  // --- Frete ---
+  freightValue    Float    @default(0)
+  // --- Endereço da obra (diferente do endereço residencial do cliente) ---
+  jobSiteAddress  String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  items       RentalItem[]
+  cashFlows   CashFlow[]
+  nfeItems    NFeItem[]
+
+  @@index([cityId, status])
+  @@index([clientId])
+  @@index([createdAt])
+}
+
+model RentalItem {
+  id         String      @id @default(cuid())
+  orderId    String
+  order      RentalOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  machineId  String
+  machine    Machine     @relation(fields: [machineId], references: [id])
+  dailyPrice Float
+  days       Int
+  subtotal   Float
+
+  @@index([orderId])
+}
+
+model CashFlow {
+  id              String          @id @default(cuid())
+  cityId          String
+  city            City            @relation(fields: [cityId], references: [id])
+  type            String          // "ENTRADA" | "SAIDA"
+  category        String          // "ALUGUEL" | "FRETE" | "MANUTENCAO" | "DESPESA" | "OUTRO"
+  amount          Float
+  description     String?
+  orderId         String?
+  order           RentalOrder?    @relation(fields: [orderId], references: [id])
+  maintenanceId   String?         @unique
+  maintenance     MaintenanceLog? @relation(fields: [maintenanceId], references: [id])
+  date            DateTime        @default(now())
+  createdAt       DateTime        @default(now())
+
+  @@index([cityId, date])
+  @@index([type])
+}
+
+model NFe {
+  id           String   @id @default(cuid())
+  cityId       String
+  city         City     @relation(fields: [cityId], references: [id])
+  date         DateTime
+  status       String   @default("PENDENTE")  // PENDENTE | EMITIDA | ERRO | CANCELADA
+  xmlUrl       String?
+  errorMessage String?
+  retryCount   Int      @default(0)
+  createdAt    DateTime @default(now())
+
+  items        NFeItem[]
+
+  @@index([cityId, date])
+  @@index([status])
+}
+
+model NFeItem {
+  id      String      @id @default(cuid())
+  nfeId   String
+  nfe     NFe         @relation(fields: [nfeId], references: [id], onDelete: Cascade)
+  orderId String
+  order   RentalOrder @relation(fields: [orderId], references: [id])
+  amount  Float
+
+  @@index([nfeId])
+}
+
+model TransferRequest {
+  id            String   @id @default(cuid())
+  machineId     String
+  machine       Machine  @relation(fields: [machineId], references: [id])
+  fromCityId    String
+  fromCity      City     @relation("fromCity", fields: [fromCityId], references: [id])
+  toCityId      String
+  toCity        City     @relation("toCity", fields: [toCityId], references: [id])
+  requestedById String
+  status        String   @default("PENDENTE")  // PENDENTE | APROVADA | REJEITADA
+  approvedById  String?
+  notes         String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([status])
+  @@index([toCityId])
+  @@index([fromCityId])
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  action    String
+  entity    String
+  entityId  String
+  details   String?
+  ip        String?
+  timestamp DateTime @default(now())
+
+  @@index([userId])
+  @@index([entity, entityId])
+  @@index([timestamp])
+}

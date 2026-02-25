@@ -1,0 +1,28 @@
+PS C:\Users\dleal\Desktop\sistemalfteste\paginas> npm run prisma:seed
+
+> paginas@1.0.0 prisma:seed
+> tsx prisma/seed.ts
+
+{
+  city: {
+    id: 'cmm1xytd80000a74mnq6tojlt',
+    name: 'Ijuí / RS',
+    address: 'Rua Principal, 123',
+    cnpj: '00.000.000/0001-00',
+    inscricaoEstadual: null,
+    active: true,
+    createdAt: 2026-02-25T11:18:59.372Z
+  },
+  owner: {
+    id: 'cmm1xytfh0002a74mkgfudkab',
+    name: 'Dono (Admin)',
+    email: 'admin@lfaluguel.com',
+    passwordHash: '$2b$10$6T27xH5QiTVPFsxKR.yqtOTpsym3Bezl9CI3tZFxpbUj6evuy9Why',
+    role: 'DONO',
+    cityId: 'cmm1xytd80000a74mnq6tojlt',
+    active: true,
+    createdAt: 2026-02-25T11:18:59.453Z,
+    updatedAt: 2026-02-25T11:18:59.453Z
+  }
+}
+PS C:\Users\dleal\Desktop\sistemalfteste\pag

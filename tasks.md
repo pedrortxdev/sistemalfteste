@@ -10,13 +10,13 @@
 - [x] Criar lista de tarefas detalhada → `tasks.md`
 - [x] Revisão 1: SQLite, 2 papéis, login automático por cidade, frete
 - [x] Revisão 2: Operador cria/edita clientes, endereço casa vs. obra, solicitação de envio de máquinas
-- [ ] Aprovação final para iniciar implementação
+- [x] Aprovação final para iniciar implementação
 
 ---
 
 ## Fase 1 — Setup do Projeto
 - [x] Inicializar projeto Next.js 14 com TypeScript
-  - [x] `npx create-next-app@latest` com App Router
+  - [x] `npm create next-app@latest` com App Router (Sem Tailwind, com src/ directory)
   - [x] Configurar `tsconfig.json` (path aliases `@/`)
   - [x] Configurar `next.config.js` (imagens, headers)
 - [x] Instalar dependências
@@ -30,14 +30,15 @@
   - [x] `NEXTAUTH_SECRET`, `NEXTAUTH_URL`
   - [x] `NFE_PROVIDER="mock"`
 - [x] Criar arquivo `prisma/schema.prisma` com todos os modelos (SQLite, Strings no lugar de enums)
-- [x] Executar `npx prisma migrate dev` — criar banco SQLite
+- [x] Adicionar scripts do prisma no `package.json` para evitar uso do `npx`
+- [x] Executar migrate (`npm run prisma:migrate`) — criar banco SQLite
 - [x] Criar `prisma/seed.ts` — DONO padrão + cidade teste
-- [x] Executar seed (`npx prisma db seed`)
+- [x] Executar seed (`npm run prisma:seed`)
 
 ---
 
 ## Fase 2 — Autenticação e Autorização
-- [ ] Configurar NextAuth v5
+- [/] Configurar NextAuth v5
   - [ ] Criar `src/lib/auth.ts` (credentials provider, callbacks JWT)
   - [ ] Criar `src/app/api/auth/[...nextauth]/route.ts`
   - [ ] JWT com: role, cityId, cityName (cidade fixa do cadastro)
@@ -314,7 +315,7 @@
 | Fase | Status | Descrição |
 |------|--------|-----------|
 | 0    | ✅     | Planejamento |
-| 1    | ⬜     | Setup do Projeto |
+| 1    | ✅     | Setup do Projeto |
 | 2    | ⬜     | Autenticação |
 | 3    | ⬜     | Layout e Componentes |
 | 4    | ⬜     | Módulo Cidades |
