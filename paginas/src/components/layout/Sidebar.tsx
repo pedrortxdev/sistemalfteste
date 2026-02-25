@@ -2,10 +2,11 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, KeyRound, Wrench, Users, Package, Building2, ShieldCheck, ArrowRightLeft } from "lucide-react";
+import { LayoutDashboard, KeyRound, Wrench, Users, Package, Building2, ShieldCheck, ArrowRightLeft, WalletCards } from "lucide-react";
 
 const navItems = [
     { name: "Resumo", href: "/dashboard", icon: LayoutDashboard },
+    { name: "Caixa", href: "/caixa", icon: WalletCards },
     { name: "Aluguel", href: "/aluguel", icon: KeyRound },
     { name: "Máquinas", href: "/maquinas", icon: Package },
     { name: "Transferências", href: "/transferencias", icon: ArrowRightLeft },

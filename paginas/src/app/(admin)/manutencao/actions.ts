@@ -30,7 +30,7 @@ export async function createMaintenance(prevState: MaintenanceState, formData: F
     const { machineId, type, description, cost } = validatedFields.data;
 
     try {
-        await prisma.$transaction(async (tx) => {
+        await prisma.$transaction(async (tx: any) => {
             const machine = await tx.machine.findUnique({
                 where: { id: machineId },
             });
@@ -102,7 +102,7 @@ export async function resolveMaintenance(id: string) {
     }
 
     try {
-        await prisma.$transaction(async (tx) => {
+        await prisma.$transaction(async (tx: any) => {
             const log = await tx.maintenanceLog.findUnique({
                 where: { id },
                 include: { machine: true },

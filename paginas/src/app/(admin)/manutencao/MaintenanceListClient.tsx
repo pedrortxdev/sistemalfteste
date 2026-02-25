@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Plus, Search, CheckCircle2, AlertTriangle, Settings2, Clock } from "lucide-react";
+import { Plus, Search, AlertTriangle, Settings2, Clock } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/Dialog";
 import { MaintenanceForm } from "./MaintenanceForm";
 import { resolveMaintenance } from "./actions";
@@ -127,7 +127,7 @@ export function MaintenanceListClient({ logs, machines }: { logs: LogItem[], mac
                                         {log.resolvedAt ? (
                                             <div className="flex flex-col gap-1">
                                                 <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10px] font-bold bg-green-50 text-green-700 w-fit">
-                                                    <CheckCircle2 size={12} /> RESOLVIDO
+                                                    👍 RESOLVIDO
                                                 </span>
                                                 <span className="text-[9px] text-gray-400 font-bold uppercase truncate max-w-[120px]">
                                                     Por: {log.resolvedBy?.name}

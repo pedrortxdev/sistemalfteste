@@ -44,8 +44,8 @@ export default async function ManutencaoPage() {
     });
 
     // Status Board Numerico
-    const activeMaintenance = maintenanceLogs.filter(log => !log.resolvedAt).length;
-    const totalCostValue = maintenanceLogs.reduce((acc, curr) => acc + curr.cost, 0);
+    const activeMaintenance = maintenanceLogs.filter((log: any) => !log.resolvedAt).length;
+    const totalCostValue = maintenanceLogs.reduce((acc: number, curr: any) => acc + curr.cost, 0);
 
     return (
         <div className="p-4 md:p-8 space-y-6 max-w-7xl mx-auto h-full flex flex-col">
