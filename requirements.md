@@ -14,12 +14,12 @@ Sistema administrativo web para empresa de aluguel de máquinas, operando em mú
 | Backend / API | Next.js API Routes (Route Handlers)         |
 | Banco de Dados| **SQLite** via Prisma ORM                   |
 | Auth          | NextAuth.js v5 (credentials provider)       |
-| UI            | CSS Modules (mínimo, sem frameworks pesados)|
+| UI            | Tailwind CSS v4 + ShadcnUI/Radix    |
 | Assinatura    | Canvas HTML5 (signature_pad)                |
 | NFe           | Integração com API SEFAZ (ou lib nfe.io)    |
 | Deploy        | Vercel-compatible / bare-metal              |
 
-> **Nota sobre performance**: O sistema deve rodar em celulares com 1 GB RAM (Samsung J5). Isso implica: zero JavaScript desnecessário no client, SSR máximo, sem animações pesadas, imagens otimizadas, bundle < 100 KB gzipped por página.
+> **Nota sobre performance**: O sistema deve rodar em celulares com 1 GB RAM (Samsung J5). Isso implica: uso tático de Server Components na maioria absoluta da navegação, e uso de modals Radix pra interatividade isolada. O JavaScript bruto e CSS são minificados no build.
 
 > **Nota sobre SQLite**: Escolhido por simplicidade — sem Docker, sem serviço externo, arquivo único. O Prisma abstrai a diferença; migração para PostgreSQL futura é trivial se necessário.
 

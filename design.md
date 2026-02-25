@@ -136,9 +136,7 @@ projeto-lf/
 │   ├── types/
 │   │   └── index.ts               # Types compartilhados
 │   └── styles/
-│       ├── globals.css            # Reset + variáveis CSS
-│       ├── layout.module.css      # Layout principal
-│       └── components.module.css  # Estilos dos componentes
+│       └── globals.css            # Reset + Tailwind v4 + Variáveis de tema
 ├── public/
 │   └── icons/                     # SVG icons inline
 ├── .env                           # Variáveis de ambiente
@@ -671,9 +669,9 @@ class MockNFeProvider implements NFeProvider { ... } // Para dev
 
 | Estratégia                 | Implementação                                           |
 | -------------------------- | ------------------------------------------------------- |
-| Server Components          | Tudo que não precisa de interação é SSR                 |
-| Zero framework CSS         | CSS Modules puro, sem Tailwind/MUI/Chakra               |
-| Sem biblioteca de gráficos | Barras de progresso em CSS puro (`<div>` com width %)   |
+| Server Components          | Dados e queries (Prisma) isolados em SSR                |
+| UI Library Framework       | ShadcnUi via Radix-Primitives p/ Acessibilidade Modal   |
+| Engine de Estilização      | Tailwind CSS v4 para Agrupamento de Styles e Responsivo |
 | Paginação server-side      | `?page=1&limit=20` no URL, sem infinite scroll          |
 | Imagens otimizadas         | `next/image` com formato WebP, max 200 KB               |
 | Font system                | `font-family: system-ui` (sem Google Fonts)             |

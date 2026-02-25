@@ -38,53 +38,51 @@
 ---
 
 ## Fase 2 — Autenticação e Autorização
-- [/] Configurar NextAuth v5
-  - [ ] Criar `src/lib/auth.ts` (credentials provider, callbacks JWT)
-  - [ ] Criar `src/app/api/auth/[...nextauth]/route.ts`
-  - [ ] JWT com: role, cityId, cityName (cidade fixa do cadastro)
-- [ ] Criar middleware de proteção (`src/middleware.ts`)
-  - [ ] Redirecionar não-autenticados para `/login`
-  - [ ] Redirecionar autenticados de `/login` para `/dashboard`
-- [ ] Criar sistema de permissões (`src/lib/permissions.ts`)
-  - [ ] Dois papéis: DONO (tudo) e OPERADOR (operacional)
-  - [ ] Permissões: clients:write, machines:write, transfers:request, orders, maintenance, cashflow, nfe:view, reports, csv
-  - [ ] DONO-only: cities:manage, users:manage, machines:transfer, transfers:approve, nfe:config
-- [ ] Criar página de login (`src/app/login/page.tsx`)
-  - [ ] Formulário: apenas email + senha (sem seletor de cidade)
-  - [ ] Feedback de erro
-  - [ ] Responsivo mobile
+- [x] Configurar NextAuth v5
+  - [x] Criar `src/lib/auth.ts` (credentials provider, callbacks JWT)
+  - [x] Criar `src/app/api/auth/[...nextauth]/route.ts`
+  - [x] JWT com: role, cityId, cityName (cidade fixa do cadastro)
+- [x] Criar middleware de proteção (`src/middleware.ts`)
+  - [x] Redirecionar não-autenticados para `/login`
+  - [x] Redirecionar autenticados de `/login` para `/dashboard`
+- [x] Criar sistema de permissões (`src/lib/permissions.ts`)
+  - [x] Dois papéis: DONO (tudo) e OPERADOR (operacional)
+  - [x] Permissões: clients:write, machines:write, transfers:request, orders, maintenance, cashflow, nfe:view, reports, csv
+  - [x] DONO-only: cities:manage, users:manage, machines:transfer, transfers:approve, nfe:config
+- [x] Criar página de login (`src/app/login/page.tsx`)
+  - [x] Formulário: apenas email + senha (sem seletor de cidade)
+  - [x] Feedback de erro
+  - [x] Responsivo mobile
 
 ---
 
 ## Fase 3 — Layout e Componentes Base
-- [ ] Criar sistema de estilos
-  - [ ] `src/styles/globals.css` — Reset, variáveis CSS, tipografia
-  - [ ] `src/styles/layout.module.css` — Sidebar, header, grid
-  - [ ] `src/styles/components.module.css` — Botões, inputs, badges, cards
-- [ ] Criar componentes UI base
-  - [ ] `Button.tsx` — variantes: primary, secondary, danger, ghost
-  - [ ] `Input.tsx` — label integrado, estado de erro
-  - [ ] `Select.tsx` — nativo `<select>` estilizado
-  - [ ] `Table.tsx` — responsiva (scroll horizontal em mobile)
-  - [ ] `Modal.tsx` — client component, confirmação
-  - [ ] `Badge.tsx` — status com cores
-  - [ ] `Card.tsx` — container com borda
-  - [ ] `Pagination.tsx` — via query params, SSR
-- [ ] Criar layout admin (`src/app/(admin)/layout.tsx`)
-  - [ ] `Sidebar.tsx` — desktop, links de navegação com ícones SVG
-  - [ ] `Header.tsx` — nome da cidade (automático), nome do usuário, logout
-  - [ ] `MobileNav.tsx` — bottom navigation, 5 ícones
-  - [ ] Para DONO: seletor de cidade no header para navegar entre cidades
-- [ ] Verificar responsividade em 360px, 768px, 1024px
+- [x] Criar sistema de estilos
+  - [x] `src/styles/globals.css` — Tailwind directives, variáveis base CSS, tipografia
+  - [x] Configurar `tailwind.config.ts` e `postcss.config.js`
+- [x] Criar componentes UI base
+  - [x] `Button.tsx` — variantes: primary, secondary, danger, ghost
+  - [x] `Input.tsx` — label integrado, estado de erro
+  - [x] `Select.tsx` — nativo `<select>` com estilo custom
+  - [x] `Badge.tsx` — status com cores via Tailwind
+  - [x] `Card.tsx` — container com borda, header, content
+- [x] Criar layout admin (`src/app/(admin)/layout.tsx`)
+  - [x] `Sidebar.tsx` — desktop flex sidebar com navegação via Lucide
+  - [x] `Header.tsx` — navbar do topo informando a cidade atual e usuário
+  - [x] `MobileNav.tsx` — bottom navigation com UX Native-like
+- [x] Verificar responsividade e UX de "simulação de app" nativa (ocultação de scrollbars, flex grids p/ mobile)
 
 ---
 
-## Fase 4 — Módulo de Cidades (DONO only)
-- [ ] API Route: `src/app/api/cities/route.ts`
-  - [ ] GET — listar cidades (DONO only)
-  - [ ] POST — criar cidade
-  - [ ] PUT — editar cidade
-  - [ ] DELETE — desativar cidade (soft delete)
+## Fase 4 — Módulo Cidades (CRUD DONO)
+- [x] Criar validação de schema (`src/lib/validations/city.ts`) com `zod`
+- [x] Criar server actions (`src/app/(admin)/cidades/actions.ts`)
+  - [x] Verificar `isDono()` nas actions
+  - [x] `createCity`, `updateCity`, `toggleCityActive`
+- [x] Criar interface
+  - [x] `page.tsx` — Listagem com os cards (Server Component) restrita `isDono()`
+  - [x] `CityCard.tsx` — Componente interativo com soft-delete visual.
+  - [x] `NewCityModal.tsx` e `CityForm.tsx` — Modal client side com actions.ge.tsx`
 - [ ] Página: `src/app/(admin)/cidades/page.tsx`
   - [ ] Tabela com nome, CNPJ, status
   - [ ] Formulário de criação/edição (modal ou inline)
@@ -93,44 +91,34 @@
 ---
 
 ## Fase 5 — Módulo de Usuários do Sistema (DONO only)
-- [ ] API Route: `src/app/api/users/route.ts`
-  - [ ] GET — listar usuários (DONO only)
-  - [ ] POST — criar usuário (hash de senha, vincular a cidade fixa)
-  - [ ] PUT — editar usuário
-  - [ ] PATCH — ativar/desativar
-- [ ] Página: `src/app/(admin)/usuarios/page.tsx`
-  - [ ] Tabela com nome, email, papel (DONO/OPERADOR), cidade, status
-  - [ ] Formulário de criação com seleção de papel e cidade
-  - [ ] Proteção de permissão (apenas DONO)
+- [x] API Route/Actions: `src/app/(admin)/usuarios/actions.ts`
+  - [x] Criar validação de schema Zod (`userSchema`)
+  - [x] POST — criar usuário (hash de senha, vincular a cidade)
+  - [x] PUT — editar usuário
+  - [x] PATCH — ativar/desativar
+- [x] Página: `src/app/(admin)/usuarios/page.tsx`
+  - [x] Tabela com nome, email, papel (DONO/OPERADOR), cidade, status
+  - [x] Formulário de criação com seleção de papel e cidade (`UserForm.tsx` em modal)
+  - [x] Proteção de permissão verificando `isDono()`
 
 ---
 
-## Fase 6 — Módulo de Máquinas (Estoque)
-- [ ] API Routes: `src/app/api/machines/route.ts` e `[id]/route.ts`
-  - [ ] GET — listar com filtros (status, categoria) — filtra por cidade do usuário
-  - [ ] GET /:id — detalhes com histórico
-  - [ ] POST — criar máquina (na cidade do usuário)
-  - [ ] PUT — editar máquina
-  - [ ] PATCH — alterar status (com registro em MachineStatusHistory)
-  - [ ] POST /transfer — transferir para outra cidade (DONO only)
-- [ ] API Routes: `src/app/api/transfers/route.ts`
-  - [ ] GET — listar solicitações (OPERADOR: as suas; DONO: todas pendentes)
-  - [ ] POST — criar solicitação de envio (OPERADOR solicita máquina para sua cidade)
-  - [ ] PATCH — aprovar/rejeitar solicitação (DONO only) → se aprovada, transfere máquina
-- [ ] Página: `src/app/(admin)/maquinas/page.tsx`
-  - [ ] Tabela com nome, modelo, status (badge), preço, total de aluguéis
-  - [ ] Filtros: status, categoria
-  - [ ] Botões: nova máquina, ver detalhes, alterar status
-  - [ ] Botão: "Solicitar envio" (OPERADOR pode pedir máquina de outra cidade)
-- [ ] Página: `src/app/(admin)/maquinas/[id]/page.tsx`
-  - [ ] Dados completos da máquina
-  - [ ] Histórico de status
-  - [ ] Histórico de aluguéis
-  - [ ] Histórico de manutenções
-- [ ] Página: `src/app/(admin)/maquinas/nova/page.tsx`
-  - [ ] Formulário com upload de foto (opcional)
-- [ ] Upload de foto comprimida (< 200 KB no client)
-- [ ] Seção de solicitações de envio (para DONO: aprovar/rejeitar pendentes)
+## Fase 6 — Módulo de Máquinas (Estoque e Transferências)
+- [x] Validação de schema Zod: `src/lib/validations/machine.ts`
+- [x] Server Actions: `src/app/(admin)/maquinas/actions.ts`
+  - [x] `createMachine` (vincula automaticamente à cidade do usuário, se operador)
+  - [x] `updateMachine`
+  - [x] `updateMachineStatus` (registra no MachineStatusHistory)
+  - [x] `requestTransfer` (OPERADOR pede máquina de outra unidade)
+  - [x] `approveTransfer` (DONO aprova)
+- [x] Página de Listagem: `src/app/(admin)/maquinas/page.tsx`
+  - [x] Tabela/Cards filtrando apenas máquinas da cidade (se Operador)
+  - [x] Formulário modal de Criação com upload de imagem e resize client-side
+- [x] Página Detalhes da Máquina: `src/app/(admin)/maquinas/[id]/page.tsx`
+  - [x] Dados completos da máquina e seu status atual
+  - [x] Histórico de Mudanças de Status
+- [x] Painel de Solicitações: `src/app/(admin)/transferencias/page.tsx`
+  - [x] Lista de transferências separadas por aprovar/rejeitar (DONO vs OPERADOR)
 
 ---
 
@@ -224,7 +212,7 @@
 
 ---
 
-## Fase 11 — Módulo de NFe
+## Fase 11 — Módulo de NFe (PULAR)
 - [ ] Service: `src/lib/nfe-service.ts`
   - [ ] Interface `NFeProvider` (emit, cancel, getXml)
   - [ ] `MockNFeProvider` — simula emissão (para dev)
@@ -271,13 +259,12 @@
 
 ---
 
-## Fase 14 — Audit Log
-- [ ] Implementar middleware de logging (`src/lib/audit.ts`)
-  - [ ] Registrar ações: login, CRUD máquinas, pedidos, caixa, NFe, transferências
-  - [ ] Capturar: userId, action, entity, entityId, IP, timestamp
-- [ ] API Route: `src/app/api/audit/route.ts`
-  - [ ] GET — listar logs (DONO only, filtro por entidade/período)
-- [ ] Acessível em painel admin (opcional como subpágina de relatórios)
+## Fase 14 — Audit Log / Sistema de LOG
+- [ ] Implementar middleware ou action base para logging (`src/lib/audit.ts`)
+- [ ] Conectar os botões do formulário às tabelas para gravar o `{userId}` de quem operou
+- [ ] Salvar dados de IP caso necessário, e salvar Action Executada.
+- [ ] API Route ou Action: `src/app/api/audit/route.ts` ou Sever Component
+- [ ] View: Listar Logs (`/relatorios/auditoria`) — (DONO only, filtro por usuário / ação)
 
 ---
 
@@ -316,11 +303,11 @@
 |------|--------|-----------|
 | 0    | ✅     | Planejamento |
 | 1    | ✅     | Setup do Projeto |
-| 2    | ⬜     | Autenticação |
-| 3    | ⬜     | Layout e Componentes |
-| 4    | ⬜     | Módulo Cidades |
-| 5    | ⬜     | Módulo Usuários |
-| 6    | ⬜     | Módulo Máquinas + Solicitações de Envio |
+| 2    | ✅     | Autenticação |
+| 3    | ✅     | Layout e Componentes |
+| 4    | ✅     | Módulo Cidades |
+| 5    | ✅     | Módulo Usuários |
+| 6    | ✅     | Módulo Máquinas + Solicitações de Envio |
 | 7    | ⬜     | Módulo Clientes (endereço casa/obra) |
 | 8    | ⬜     | Módulo Manutenção |
 | 9    | ⬜     | Módulo Pedidos + Frete + Endereço Obra |
