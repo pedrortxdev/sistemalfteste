@@ -123,7 +123,7 @@ projeto-lf/
 │   │   │   └── UserForm.tsx
 │   │   ├── SignaturePad.tsx       # Assinatura digital (Canvas)
 │   │   └── charts/
-│   │       └── SimpleBarChart.tsx # Gráfico leve (CSS-only)
+│   │       └── SimpleBarChart.tsx # Gráfico leve (CSS-only minimalist tailwind)
 │   ├── lib/
 │   │   ├── prisma.ts              # Prisma client singleton
 │   │   ├── auth.ts                # NextAuth config
