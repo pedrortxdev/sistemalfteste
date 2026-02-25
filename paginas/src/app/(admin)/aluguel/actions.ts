@@ -57,7 +57,7 @@ export async function createRentalOrder(data: any) {
                     freightValue: validData.freightValue,
                     jobSiteAddress: validData.jobSiteAddress || null,
                     notes: validData.notes || null,
-                    signatureUrl: data.signatureUrl || null
+                    signatureUrl: validData.signatureUrl || null
                 }
             });
 

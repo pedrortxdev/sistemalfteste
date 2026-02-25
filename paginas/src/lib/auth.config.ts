@@ -15,6 +15,7 @@ export const authConfig = {
         },
         session({ session, token }) {
             if (session.user) {
+                session.user.id = (token.sub || token.id) as string;
                 session.user.role = token.role as string;
                 session.user.cityId = token.cityId as string;
                 session.user.cityName = token.cityName as string;
