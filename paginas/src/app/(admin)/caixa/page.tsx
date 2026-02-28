@@ -3,6 +3,8 @@ import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { CashFlowClient } from "./CashFlowClient";
 
+export const dynamic = 'force-dynamic';
+
 export const metadata = {
     title: "Fluxo de Caixa | LF Aluguel",
 };

@@ -4,6 +4,8 @@ import { redirect } from "next/navigation";
 import { NewMachineModal } from "./NewMachineModal";
 import { MachineCard } from "./MachineCard";
 
+export const dynamic = 'force-dynamic';
+
 export const metadata = {
     title: "Estoque de Máquinas | LF Aluguel",
 };
@@ -24,11 +26,18 @@ export default async function MaquinasPage() {
     });
 
     // Filtra máquinas (Dono ver todas; Operador vê apenas as da sua filial)
-    const machines = await prisma.machine.findMany({
+    const machinesRaw = await prisma.machine.findMany({
         where: session.user.role === "DONO" ? {} : { cityId: session.user.cityId },
         include: { city: true },
         orderBy: { createdAt: "desc" },
     });
+
+    // Serializar datas para o Cliente
+    const machines = machinesRaw.map(m => ({
+        ...m,
+        createdAt: m.createdAt.toISOString(),
+        updatedAt: m.updatedAt.toISOString(),
+    }));
 
     return (
         <div className="p-4 md:p-8 space-y-6 max-w-7xl mx-auto h-full flex flex-col">

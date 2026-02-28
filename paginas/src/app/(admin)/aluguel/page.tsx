@@ -5,6 +5,8 @@ import Link from "next/link";
 import { Badge } from "@/components/ui/Badge";
 import { Plus, Search, FileText } from "lucide-react";
 
+export const dynamic = 'force-dynamic';
+
 export const metadata = {
     title: "Aluguéis | LF Aluguel",
 };

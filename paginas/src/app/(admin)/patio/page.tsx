@@ -4,6 +4,8 @@ import { Badge } from "@/components/ui/Badge";
 import { Package, Wrench, CheckCircle2, AlertTriangle, Search } from "lucide-react";
 import { PatioClient } from "./PatioClient";
 
+export const dynamic = 'force-dynamic';
+
 export default async function PatioPage() {
   const session = await auth();
   if (!session) return null;

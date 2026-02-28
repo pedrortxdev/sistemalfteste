@@ -3,6 +3,8 @@ import { isDono } from "@/lib/permissions";
 import { ReportsClient } from "./ReportsClient";
 import { getRevenueReport, getMachineReport, getDetailedCashFlowReport } from "./actions";
 
+export const dynamic = 'force-dynamic';
+
 export default async function ReportsPage() {
   const session = await auth();
   if (!session) return null;
