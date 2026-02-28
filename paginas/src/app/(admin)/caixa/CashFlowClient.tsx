@@ -13,7 +13,7 @@ type Transaction = {
     category: string;
     amount: number;
     description: string | null;
-    date: Date;
+    date: string; // Mudado de Date para string para suportar serialização
     orderId?: string | null;
     maintenanceId?: string | null;
 };

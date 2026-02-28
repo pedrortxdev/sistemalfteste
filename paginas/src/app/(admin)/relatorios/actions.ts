@@ -105,7 +105,7 @@ export async function getDetailedCashFlowReport(startDate?: Date, endDate?: Date
     where.cityId = session.user.cityId;
   }
 
-  return await prisma.cashFlow.findMany({
+  const data = await prisma.cashFlow.findMany({
     where,
     include: {
       city: { select: { name: true } }
@@ -114,6 +114,13 @@ export async function getDetailedCashFlowReport(startDate?: Date, endDate?: Date
       date: 'desc'
     }
   });
+
+  // Serializar datas para o Client Component
+  return data.map(item => ({
+    ...item,
+    date: item.date.toISOString(),
+    createdAt: item.createdAt.toISOString(),
+  }));
 }
 
 export async function getAuditLogs() {

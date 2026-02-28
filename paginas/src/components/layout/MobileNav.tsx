@@ -6,7 +6,7 @@ import { LayoutDashboard, KeyRound, Package, Search, WalletCards, Building2, Bar
 
 // For mobile we often want slightly different or condensed items to fit on the bar.
 // This matches the "App-like" feel the user requested.
-const mobileNavItems = [
+const mobileNavItems: { name: string, href: string, icon: any, adminOnly?: boolean }[] = [
     { name: "Início", href: "/dashboard", icon: LayoutDashboard },
     { name: "Pátio", href: "/patio", icon: Package },
     { name: "Aluguel", href: "/aluguel", icon: KeyRound },
@@ -16,7 +16,10 @@ const mobileNavItems = [
 
 export function MobileNav({ role }: { role?: string }) {
     const pathname = usePathname();
-    const itemsToRender = mobileNavItems.filter(item => !(item.adminOnly && role !== "DONO"));
+    const itemsToRender = mobileNavItems.filter(item => {
+        if (item.adminOnly && role !== "DONO") return false;
+        return true;
+    });
 
     return (
         <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-lg border-t border-gray-200 pb-safe">

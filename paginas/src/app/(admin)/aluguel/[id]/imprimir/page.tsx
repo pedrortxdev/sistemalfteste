@@ -2,20 +2,23 @@ import { prisma } from "@/lib/prisma";
 import { notFound, redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import Image from "next/image";
+import { PrintButton } from "@/components/ui/PrintButton";
 
 export const metadata = {
     title: "Imprimir Locação | LF Aluguel",
 };
 
-export default async function PrintRentalPage({ params }: { params: { id: string } }) {
+export default async function PrintRentalPage({ params }: { params: Promise<{ id: string }> }) {
     const session = await auth();
 
     if (!session?.user) {
         redirect("/login");
     }
 
+    const { id } = await params;
+
     const order = await prisma.rentalOrder.findUnique({
-        where: { id: params.id },
+        where: { id },
         include: {
             client: true,
             city: true,
@@ -40,9 +43,7 @@ export default async function PrintRentalPage({ params }: { params: { id: string
                 </div>
                 <div className="flex gap-2">
                     <a href="/aluguel" className="px-4 py-2 border rounded-lg text-sm font-bold text-gray-700 hover:bg-gray-50">Voltar</a>
-                    <button onClick={() => { if (typeof window !== "undefined") window.print() }} className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-bold flex gap-2">
-                        Imprimir Formato A4
-                    </button>
+                    <PrintButton />
                 </div>
             </div>
 

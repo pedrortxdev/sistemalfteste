@@ -7,8 +7,8 @@ type OrderSimp = {
     id: string;
     clientId: string;
     totalValue: number;
-    startDate: Date;
-    endDate: Date;
+    startDate: string; // Mudado de Date para string
+    endDate: string;   // Mudado de Date para string
     client: { name: string };
 };
 

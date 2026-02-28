@@ -72,6 +72,15 @@ export default async function DashboardPage() {
         }
     });
 
+    // Serializar datas das ordens ativas para o Cliente
+    const serializedOrders = activeOrders.map(order => ({
+        ...order,
+        startDate: order.startDate.toISOString(),
+        endDate: order.endDate.toISOString(),
+        createdAt: order.createdAt.toISOString(),
+        updatedAt: order.updatedAt.toISOString(),
+    }));
+
     return (
         <div className="p-4 md:p-8 space-y-6 max-w-7xl mx-auto h-full flex flex-col">
             <div>
@@ -89,7 +98,7 @@ export default async function DashboardPage() {
                     statusCounts,
                     monthIn,
                     monthOut,
-                    activeOrders,
+                    activeOrders: serializedOrders,
                     pendingTransfers
                 }}
                 isOwner={isOwner}

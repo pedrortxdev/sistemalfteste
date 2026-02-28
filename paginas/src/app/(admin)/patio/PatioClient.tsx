@@ -11,9 +11,11 @@ interface Machine {
   model: string | null;
   status: string;
   serialNumber?: string | null;
+  createdAt: string; // ISO String
+  updatedAt: string; // ISO String
 }
 
-export function PatioClient({ initialMachines }: { initialMachines: any[] }) {
+export function PatioClient({ initialMachines }: { initialMachines: Machine[] }) {
   const [machines, setMachines] = useState(initialMachines);
   const [searchTerm, setSearchTerm] = useState("");
   const { toast } = useToast();

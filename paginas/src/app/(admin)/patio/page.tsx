@@ -9,10 +9,17 @@ export default async function PatioPage() {
   if (!session) return null;
 
   // Carregar máquinas da cidade do funcionário
-  const machines = await prisma.machine.findMany({
+  const machinesRaw = await prisma.machine.findMany({
     where: { cityId: session.user.cityId },
     orderBy: { name: 'asc' }
   });
+
+  // Serializar datas para evitar erro de renderização no Cliente
+  const machines = machinesRaw.map(m => ({
+    ...m,
+    createdAt: m.createdAt.toISOString(),
+    updatedAt: m.updatedAt.toISOString(),
+  }));
 
   const stats = {
     disponiveis: machines.filter(m => m.status === 'DISPONIVEL').length,

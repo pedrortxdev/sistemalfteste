@@ -40,6 +40,13 @@ export default async function CaixaPage() {
     const monthIn = monthTransactions.filter((t: any) => t.type === "ENTRADA").reduce((acc: number, curr: any) => acc + curr.amount, 0);
     const monthOut = monthTransactions.filter((t: any) => t.type === "SAIDA").reduce((acc: number, curr: any) => acc + curr.amount, 0);
 
+    // Serializar datas para o Cliente
+    const serializedTransactions = allTransactions.map(tx => ({
+        ...tx,
+        date: tx.date.toISOString(),
+        createdAt: tx.createdAt.toISOString(),
+    }));
+
     return (
         <div className="p-4 md:p-8 space-y-6 max-w-7xl mx-auto h-full flex flex-col">
             <div>
@@ -74,7 +81,7 @@ export default async function CaixaPage() {
                 </div>
             </div>
 
-            <CashFlowClient transactions={allTransactions} userRole={session.user.role} />
+            <CashFlowClient transactions={serializedTransactions} userRole={session.user.role} />
         </div>
     );
 }
