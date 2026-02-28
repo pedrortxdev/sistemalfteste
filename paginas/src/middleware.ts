@@ -5,14 +5,15 @@ import { authConfig } from "./lib/auth.config";
 const { auth } = NextAuth(authConfig);
 
 export default auth((req) => {
+    const { nextUrl } = req;
     const isLoggedIn = !!req.auth;
-    const isLoginPage = req.nextUrl.pathname === "/login";
+    const isLoginPage = nextUrl.pathname === "/login";
 
     if (!isLoggedIn && !isLoginPage) {
-        return Response.redirect(new URL("/login", req.url));
+        return Response.redirect(new URL("/login", nextUrl));
     }
     if (isLoggedIn && isLoginPage) {
-        return Response.redirect(new URL("/dashboard", req.url));
+        return Response.redirect(new URL("/dashboard", nextUrl));
     }
 });
 
