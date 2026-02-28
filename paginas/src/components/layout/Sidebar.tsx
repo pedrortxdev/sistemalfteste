@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, KeyRound, Wrench, Users, Package, Building2, ShieldCheck, ArrowRightLeft, WalletCards } from "lucide-react";
+import { LayoutDashboard, KeyRound, Wrench, Users, Package, Building2, ShieldCheck, ArrowRightLeft, WalletCards, BarChart3, History } from "lucide-react";
 
 const navItems = [
     { name: "Resumo", href: "/dashboard", icon: LayoutDashboard },
@@ -12,8 +12,10 @@ const navItems = [
     { name: "Transferências", href: "/transferencias", icon: ArrowRightLeft },
     { name: "Manutenção", href: "/manutencao", icon: Wrench },
     { name: "Clientes", href: "/clientes", icon: Users },
+    { name: "Relatórios", href: "/relatorios", icon: BarChart3 },
     { name: "Unidades", href: "/cidades", icon: Building2, adminOnly: true },
     { name: "Usuários", href: "/usuarios", icon: ShieldCheck, adminOnly: true },
+    { name: "Log Auditoria", href: "/relatorios/auditoria", icon: History, adminOnly: true },
 ];
 
 export function Sidebar({ role }: { role?: string }) {

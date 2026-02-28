@@ -5,6 +5,7 @@ import { Plus, Search, AlertTriangle, Settings2, Clock } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/Dialog";
 import { MaintenanceForm } from "./MaintenanceForm";
 import { resolveMaintenance } from "./actions";
+import { useToast } from "@/components/ui/Toast";
 
 type LogItem = {
     id: string;
@@ -24,6 +25,7 @@ type MachineBasic = {
 };
 
 export function MaintenanceListClient({ logs, machines }: { logs: LogItem[], machines: MachineBasic[] }) {
+    const { toast } = useToast();
     const [searchTerm, setSearchTerm] = useState("");
     const [isCreateOpen, setIsCreateOpen] = useState(false);
     const [resolvingId, setResolvingId] = useState<string | null>(null);
@@ -38,8 +40,10 @@ export function MaintenanceListClient({ logs, machines }: { logs: LogItem[], mac
 
         setResolvingId(id);
         const res = await resolveMaintenance(id);
-        if (!res.success) {
-            alert(res.message);
+        if (res.success) {
+            toast(`${machineName} retornou ao pátio!`, "success");
+        } else {
+            toast(res.message, "error");
         }
         setResolvingId(null);
     };

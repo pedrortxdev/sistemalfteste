@@ -4,6 +4,8 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { machineSchema, type MachineState } from "@/lib/validations/machine";
+import { createAuditLog } from "@/lib/audit";
+import { uploadFile } from "@/lib/supabase";
 
 // Auxilia para revalidar paths associados
 function refreshCaches() {
@@ -17,8 +19,6 @@ export async function createMachine(prevState: MachineState, formData: FormData)
         throw new Error("Não autorizado.");
     }
 
-    // Operadores e Donos podem criar. Se for dono, aceitamos o cityId do form se tentar em outra unidade
-    // Mas por padrão (v1), criaremos sempre na cidade do usuário logado por segurança, ou usamos o form dropdown pro dono
     const baseCityId = session.user.role === "DONO"
         ? formData.get("cityId")?.toString() || session.user.cityId
         : session.user.cityId;
@@ -42,8 +42,21 @@ export async function createMachine(prevState: MachineState, formData: FormData)
 
     const { name, model, category, pricePerDay, status, cityId } = validatedFields.data;
 
+    // --- LÓGICA DE STORAGE PARA FOTO ---
+    let photoUrl = null;
+    const photoFile = formData.get("photo") as File;
+    if (photoFile && photoFile.size > 0) {
+        try {
+            const fileName = `machine_${Date.now()}_${name.replace(/\s+/g, '_')}.png`;
+            const arrayBuffer = await photoFile.arrayBuffer();
+            photoUrl = await uploadFile('machines', fileName, Buffer.from(arrayBuffer));
+        } catch (storageError) {
+            console.error("Erro ao salvar foto no Storage:", storageError);
+        }
+    }
+
     try {
-        await prisma.machine.create({
+        const result = await prisma.machine.create({
             data: {
                 name,
                 model: model || null,
@@ -51,8 +64,16 @@ export async function createMachine(prevState: MachineState, formData: FormData)
                 dailyPrice: pricePerDay,
                 status,
                 cityId,
-                // imageUrl: Implementação de imagem futuramente via S3 ou Blob
+                photoUrl: photoUrl // Salva a URL do Storage
             },
+        });
+
+        await createAuditLog({
+            userId: session.user.id!,
+            action: "CREATE",
+            entity: "MACHINE",
+            entityId: result.id,
+            details: `Máquina cadastrada: ${name} (${model})`
         });
 
         refreshCaches();
@@ -73,7 +94,6 @@ export async function updateMachine(
         throw new Error("Não autorizado.");
     }
 
-    // Mesmo controle de cidade
     const baseCityId = session.user.role === "DONO"
         ? formData.get("cityId")?.toString() || session.user.cityId
         : session.user.cityId;
@@ -97,6 +117,19 @@ export async function updateMachine(
 
     const { name, model, category, pricePerDay, status, cityId } = validatedFields.data;
 
+    // --- LÓGICA DE STORAGE PARA ATUALIZAÇÃO DE FOTO ---
+    let photoUrlUpdate: string | undefined = undefined;
+    const photoFile = formData.get("photo") as File;
+    if (photoFile && photoFile.size > 0) {
+        try {
+            const fileName = `machine_${Date.now()}_${name.replace(/\s+/g, '_')}.png`;
+            const arrayBuffer = await photoFile.arrayBuffer();
+            photoUrlUpdate = await uploadFile('machines', fileName, Buffer.from(arrayBuffer));
+        } catch (storageError) {
+            console.error("Erro ao salvar nova foto no Storage:", storageError);
+        }
+    }
+
     try {
         await prisma.machine.update({
             where: { id },
@@ -107,7 +140,16 @@ export async function updateMachine(
                 dailyPrice: pricePerDay,
                 status,
                 cityId,
+                ...(photoUrlUpdate ? { photoUrl: photoUrlUpdate } : {})
             },
+        });
+
+        await createAuditLog({
+            userId: session.user.id!,
+            action: "UPDATE",
+            entity: "MACHINE",
+            entityId: id,
+            details: `Máquina atualizada: ${name} (${model})`
         });
 
         refreshCaches();
@@ -147,6 +189,14 @@ export async function updateMachineStatus(id: string, newStatus: string) {
                 changedBy: session.user.id,
                 notes: "Alteração manual via sistema",
             }
+        });
+
+        await createAuditLog({
+            userId: session.user.id!,
+            action: "STATUS_CHANGE",
+            entity: "MACHINE",
+            entityId: id,
+            details: `Status alterado de ${machine.status} para ${newStatus}`
         });
 
         refreshCaches();

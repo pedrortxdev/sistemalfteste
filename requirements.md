@@ -12,7 +12,7 @@ Sistema administrativo web para empresa de aluguel de máquinas, operando em mú
 | ------------- | ------------------------------------------- |
 | Frontend      | Next.js 14 (App Router, RSC)                |
 | Backend / API | Next.js API Routes (Route Handlers)         |
-| Banco de Dados| **SQLite** via Prisma ORM                   |
+| Banco de Dados| **PostgreSQL** via Supabase (Prisma ORM)    |
 | Auth          | NextAuth.js v5 (credentials provider)       |
 | UI            | Tailwind CSS v4 + ShadcnUI/Radix    |
 | Assinatura    | Canvas HTML5 (signature_pad)                |
@@ -21,7 +21,7 @@ Sistema administrativo web para empresa de aluguel de máquinas, operando em mú
 
 > **Nota sobre performance**: O sistema deve rodar em celulares com 1 GB RAM (Samsung J5). Isso implica: uso tático de Server Components na maioria absoluta da navegação, e uso de modals Radix pra interatividade isolada. O JavaScript bruto e CSS são minificados no build.
 
-> **Nota sobre SQLite**: Escolhido por simplicidade — sem Docker, sem serviço externo, arquivo único. O Prisma abstrai a diferença; migração para PostgreSQL futura é trivial se necessário.
+> **Nota sobre Banco de Dados**: Escolhido Supabase PostgreSQL por escalabilidade, persistência gerenciada e facilidade de deploy. O Prisma abstrai a diferença.
 
 ---
 
@@ -147,7 +147,7 @@ Sistema administrativo web para empresa de aluguel de máquinas, operando em mú
 | NF-3    | **Bundle**: JS no client < 100 KB gzipped por rota                                          |
 | NF-4    | **Responsividade**: Desktop (1024px+), Tablet (768px), Mobile (360px)                       |
 | NF-5    | **Segurança**: CSRF, rate limiting, senhas hasheadas (bcrypt), validação server-side         |
-| NF-6    | **Banco de dados**: SQLite — arquivo único, sem serviço externo, Prisma ORM                 |
+| NF-6    | **Banco de dados**: PostgreSQL (Supabase) — persistência gerenciada, Prisma ORM                 |
 | NF-7    | **SSR**: Máximo uso de Server Components para reduzir JS no client                          |
 | NF-8    | **Acessibilidade**: Labels, contraste mínimo WCAG AA, navegação por teclado                 |
 | NF-9    | **Internacionalização**: Apenas pt-BR                                                        |

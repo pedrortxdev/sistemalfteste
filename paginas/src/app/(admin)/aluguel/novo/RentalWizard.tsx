@@ -6,10 +6,11 @@ import { createRentalOrder } from "../actions";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
-import { FileText, MapPin, PackagePlus, PenTool, Calendar as CalendarIcon, ArrowRight, ArrowLeft, Trash2 } from "lucide-react";
+import { FileText, MapPin, PackagePlus, PenTool, Calendar as CalendarIcon, ArrowRight, ArrowLeft, Trash2, CheckCircle } from "lucide-react";
 import { Badge } from "@/components/ui/Badge";
 import SignaturePad from "react-signature-canvas";
 import { useRef } from "react";
+import { useToast } from "@/components/ui/Toast";
 
 interface ClientData {
     id: string;
@@ -35,6 +36,7 @@ interface RentalWizardProps {
 
 export function RentalWizard({ clients, availableMachines, userCityId }: RentalWizardProps) {
     const router = useRouter();
+    const { toast } = useToast();
     const [step, setStep] = useState(1);
     const [isPending, startTransition] = useTransition();
     const sigPad = useRef<any>(null);
@@ -75,11 +77,13 @@ export function RentalWizard({ clients, availableMachines, userCityId }: RentalW
 
         if (!selectedItems.find(item => item.machine.id === machine.id)) {
             setSelectedItems(prev => [...prev, { machine, days: defaultDays }]);
+            toast("Máquina adicionada ao contrato", "success");
         }
     };
 
     const removeMachineFromCart = (machineId: string) => {
         setSelectedItems(prev => prev.filter(item => item.machine.id !== machineId));
+        toast("Máquina removida", "info");
     };
 
     const updateItemDays = (machineId: string, days: number) => {
@@ -94,7 +98,7 @@ export function RentalWizard({ clients, availableMachines, userCityId }: RentalW
     // Finalização
     const handleFinalize = () => {
         if (sigPad.current?.isEmpty()) {
-            alert("A assinatura do cliente é obrigatória.");
+            toast("A assinatura do cliente é obrigatória.", "error");
             return;
         }
 
@@ -114,9 +118,10 @@ export function RentalWizard({ clients, availableMachines, userCityId }: RentalW
 
             const result = await createRentalOrder(finalPayload);
             if (result.success) {
+                toast("Contrato gerado e máquinas locadas!", "success");
                 router.push("/aluguel");
             } else {
-                alert(result.message || "Ocorreu um erro ao gerar o pedido.");
+                toast(result.message || "Ocorreu um erro ao gerar o pedido.", "error");
             }
         });
     };
@@ -387,6 +392,3 @@ export function RentalWizard({ clients, availableMachines, userCityId }: RentalW
         </div>
     );
 }
-
-// Icon Import Workaround - CheckCircle was missing above, creating a quick mock or adding to imports
-import { CheckCircle } from "lucide-react";

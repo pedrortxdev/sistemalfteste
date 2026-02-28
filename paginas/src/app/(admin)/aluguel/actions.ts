@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { rentalOrderSchema } from "@/lib/validations/rental";
+import { uploadFile } from "@/lib/supabase";
 
 export async function createRentalOrder(data: any) {
     const session = await auth();
@@ -22,6 +23,20 @@ export async function createRentalOrder(data: any) {
 
         const validData = parsed.data;
 
+        // --- LÓGICA DE STORAGE PARA ASSINATURA ---
+        let finalSignatureUrl = null;
+        if (data.signatureUrl) {
+            try {
+                // Nome do arquivo baseado em timestamp + ID cliente para evitar colisão
+                const fileName = `sig_${Date.now()}_${validData.clientId}.png`;
+                finalSignatureUrl = await uploadFile('signatures', fileName, data.signatureUrl);
+            } catch (storageError) {
+                console.error("Erro ao salvar assinatura no Storage:", storageError);
+                // Podemos optar por continuar ou falhar. Aqui vamos falhar pois assinatura é obrigatória no plano.
+                return { success: false, message: "Falha ao processar assinatura digital." };
+            }
+        }
+
         // Validar no BD se as maquinas ainda estao disponiveis (Concorrencia)
         const machineIds = validData.items.map(i => i.machineId);
         const machinesInDB = await prisma.machine.findMany({
@@ -32,13 +47,6 @@ export async function createRentalOrder(data: any) {
         if (unavailableList.length > 0) {
             return { success: false, message: `Uma das máquinas selecionadas não está mais disponível.` };
         }
-
-        // Fazer a transação:
-        // 1. Criar a RentalOrder
-        // 2. Inserir os RentalItems
-        // 3. Modificar o status de todas as máquinas para ALUGADA
-        // 4. Inserir no log de máquinas a troca
-        // 5. Inserir o Registro de CashFlow (Sinal) se houver
 
         const totalValue = validData.items.reduce((acc, curr) => acc + curr.subtotal, 0) + validData.freightValue;
 
@@ -57,7 +65,7 @@ export async function createRentalOrder(data: any) {
                     freightValue: validData.freightValue,
                     jobSiteAddress: validData.jobSiteAddress || null,
                     notes: validData.notes || null,
-                    signatureUrl: validData.signatureUrl || null
+                    signatureUrl: finalSignatureUrl // Agora usamos a URL do Supabase
                 }
             });
 

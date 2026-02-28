@@ -22,7 +22,7 @@
 ├─────────────────────────────────────────────────┤
 │               Prisma ORM                        │
 ├─────────────────────────────────────────────────┤
-│              SQLite (arquivo local)              │
+│           PostgreSQL (Supabase)                 │
 └─────────────────────────────────────────────────┘
 ```
 
@@ -33,11 +33,10 @@
 ```
 projeto-lf/
 ├── prisma/
-│   ├── schema.prisma          # Modelos do banco
+│   ├── schema.prisma          # Modelos do banco (PostgreSQL)
 │   ├── seed.ts                # Dados iniciais (dono, cidades teste)
-│   ├── dev.db                 # Banco SQLite (gerado)
 │   └── migrations/            # Migrações auto-geradas
-├── src/
+```
 │   ├── app/
 │   │   ├── layout.tsx         # Layout raiz (meta, fontes)
 │   │   ├── page.tsx           # Redirect → /login

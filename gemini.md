@@ -1,8 +1,8 @@
 # Diário de Desenvolvimento (Gemini AI)
-📅 **Última Atualização:** 25/02/2026 (Fase 12 Concluída)
+📅 **Última Atualização:** 28/02/2026 (Fase 12 Concluída + Migração Supabase)
 
 ## O que foi construído até agora
-Desenvolvemos de ponta a ponta o **Sistema LF de Aluguel de Máquinas** (App Router Next.js 14, Prisma SQLite e Tailwind CSS v4).
+Desenvolvemos de ponta a ponta o **Sistema LF de Aluguel de Máquinas** (App Router Next.js 14/15, Prisma Supabase PostgreSQL e Tailwind CSS v4).
 A fundação do sistema, autenticação e quase todas as CRUDs gerenciais estão operacionais.
 
 ### Módulos Concluídos e Funcionais (Fases 1 a 12):
@@ -13,6 +13,7 @@ A fundação do sistema, autenticação e quase todas as CRUDs gerenciais estão
 - **Módulo Oficina (Fase 9):** Se uma máquina quebra, o mecânico dá entrada aqui. Ela vira `ESTRAGADA` e o custo do reparo é enviado pro livro caixa. Ao clicar 'Resolver' ela volta pro pátio verde.
 - **Módulo Fluxo de Caixa (Fase 10):** Uma grade do tipo Ledger. Os aluguéis e as quebras já disparam entradas autônomas ali. Mas inserimos um botão para Aportes de Sócios e Despesas de Conta de Luz manuais. Lógica SSR agrupa o giro do mês atual contra o global.
 - **Dashboard (Fase 12):** O grande Cérebro. Ao logar, a home dispara 5 querys Simultâneas (Promise.all) resumindo quantos % do patio tá ocupado, as últimas receitas da loja e a saúde do Caixa no mês.
+- **Infraestrutura:** Migrado de SQLite local para **Supabase PostgreSQL** (South America - sa-east-1) para maior escalabilidade e persistência em produção.
 
 ---
 

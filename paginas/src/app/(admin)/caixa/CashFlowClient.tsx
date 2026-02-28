@@ -5,6 +5,7 @@ import { Plus, Download, Search, Trash2, ArrowUpRight, ArrowDownRight, Frown, Lo
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/Dialog";
 import { TransactionForm } from "./TransactionForm";
 import { deleteTransaction } from "./actions";
+import { useToast } from "@/components/ui/Toast";
 
 type Transaction = {
     id: string;
@@ -18,6 +19,7 @@ type Transaction = {
 };
 
 export function CashFlowClient({ transactions, userRole }: { transactions: Transaction[], userRole: string }) {
+    const { toast } = useToast();
     const [searchTerm, setSearchTerm] = useState("");
     const [monthFilter, setMonthFilter] = useState("ALL");
     const [isCreateOpen, setIsCreateOpen] = useState(false);
@@ -46,7 +48,11 @@ export function CashFlowClient({ transactions, userRole }: { transactions: Trans
 
         setDeletingId(id);
         const res = await deleteTransaction(id);
-        if (!res.success) alert(res.message);
+        if (res.success) {
+            toast("Lançamento excluído com sucesso", "success");
+        } else {
+            toast(res.message, "error");
+        }
         setDeletingId(null);
     };
 

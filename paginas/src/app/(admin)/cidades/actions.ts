@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { isDono } from "@/lib/permissions";
 import { citySchema, type CityState } from "@/lib/validations/city";
+import { createAuditLog } from "@/lib/audit";
 
 // Helper para validar permissão
 async function checkDonoPermission() {
@@ -12,10 +13,11 @@ async function checkDonoPermission() {
     if (!session?.user || !isDono(session.user.role)) {
         throw new Error("Acesso negado. Apenas o DONO pode gerenciar cidades.");
     }
+    return session;
 }
 
 export async function createCity(prevState: CityState, formData: FormData): Promise<CityState> {
-    await checkDonoPermission();
+    const session = await checkDonoPermission();
 
     const validatedFields = citySchema.safeParse({
         name: formData.get("name"),
@@ -35,13 +37,21 @@ export async function createCity(prevState: CityState, formData: FormData): Prom
     const { name, address, cnpj, inscricaoEstadual } = validatedFields.data;
 
     try {
-        await prisma.city.create({
+        const result = await prisma.city.create({
             data: {
                 name,
                 address: address || "",
                 cnpj: cnpj || "",
                 inscricaoEstadual: inscricaoEstadual || "",
             },
+        });
+
+        await createAuditLog({
+            userId: session.user.id!,
+            action: "CREATE",
+            entity: "CITY",
+            entityId: result.id,
+            details: `Unidade cadastrada: ${name} (CNPJ: ${cnpj})`
         });
 
         revalidatePath("/cidades");
@@ -57,7 +67,7 @@ export async function updateCity(
     prevState: CityState,
     formData: FormData
 ): Promise<CityState> {
-    await checkDonoPermission();
+    const session = await checkDonoPermission();
 
     const validatedFields = citySchema.safeParse({
         name: formData.get("name"),
@@ -87,6 +97,14 @@ export async function updateCity(
             },
         });
 
+        await createAuditLog({
+            userId: session.user.id!,
+            action: "UPDATE",
+            entity: "CITY",
+            entityId: id,
+            details: `Unidade atualizada: ${name}`
+        });
+
         revalidatePath("/cidades");
         return { message: "Unidade atualizada com sucesso.", success: true };
     } catch (error) {
@@ -96,13 +114,22 @@ export async function updateCity(
 }
 
 export async function toggleCityActive(id: string, currentStatus: boolean) {
-    await checkDonoPermission();
+    const session = await checkDonoPermission();
 
     try {
         await prisma.city.update({
             where: { id },
             data: { active: !currentStatus },
         });
+
+        await createAuditLog({
+            userId: session.user.id!,
+            action: "STATUS_CHANGE",
+            entity: "CITY",
+            entityId: id,
+            details: `Unidade ${!currentStatus ? 'ativada' : 'desativada'}`
+        });
+
         revalidatePath("/cidades");
     } catch (error) {
         console.error("Database Error:", error);

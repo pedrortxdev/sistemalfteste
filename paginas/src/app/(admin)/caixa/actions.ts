@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { cashflowSchema, CashFlowState } from "@/lib/validations/cashflow";
+import { createAuditLog } from "@/lib/audit";
 
 export async function createManualTransaction(prevState: CashFlowState, formData: FormData): Promise<CashFlowState> {
     const session = await auth();
@@ -30,7 +31,7 @@ export async function createManualTransaction(prevState: CashFlowState, formData
     const { type, category, amount, description } = validatedFields.data;
 
     try {
-        await prisma.cashFlow.create({
+        const result = await prisma.cashFlow.create({
             data: {
                 cityId: session.user.cityId,
                 type,
@@ -38,6 +39,14 @@ export async function createManualTransaction(prevState: CashFlowState, formData
                 amount,
                 description,
             }
+        });
+
+        await createAuditLog({
+            userId: session.user.id!,
+            action: "CREATE",
+            entity: "CASHFLOW",
+            entityId: result.id,
+            details: `Lançamento manual de R$ ${amount.toLocaleString()} - ${category} (${type})`
         });
 
         revalidatePath("/caixa");
@@ -58,8 +67,20 @@ export async function deleteTransaction(id: string) {
     }
 
     try {
+        const transaction = await prisma.cashFlow.findUnique({
+            where: { id }
+        });
+
         await prisma.cashFlow.delete({
             where: { id }
+        });
+
+        await createAuditLog({
+            userId: session.user.id!,
+            action: "DELETE",
+            entity: "CASHFLOW",
+            entityId: id,
+            details: `Exclusão de registro de R$ ${transaction?.amount.toLocaleString()} (${transaction?.category})`
         });
 
         revalidatePath("/caixa");

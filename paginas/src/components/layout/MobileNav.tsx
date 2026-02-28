@@ -2,18 +2,16 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, KeyRound, Truck, Search, UserCircle, Building2, ShieldCheck } from "lucide-react";
+import { LayoutDashboard, KeyRound, Package, Search, WalletCards, Building2, BarChart3 } from "lucide-react";
 
 // For mobile we often want slightly different or condensed items to fit on the bar.
 // This matches the "App-like" feel the user requested.
 const mobileNavItems = [
     { name: "Início", href: "/dashboard", icon: LayoutDashboard },
+    { name: "Pátio", href: "/patio", icon: Package },
     { name: "Aluguel", href: "/aluguel", icon: KeyRound },
-    { name: "Frotas", href: "/maquinas", icon: Truck },
-    { name: "Buscar", href: "/clientes", icon: Search },
-    { name: "Unidades", href: "/cidades", icon: Building2, adminOnly: true },
-    { name: "Usuários", href: "/usuarios", icon: ShieldCheck, adminOnly: true },
-    { name: "Perfil", href: "/perfil", icon: UserCircle }, // usually mobile has a profile tab instead of a header dropdown
+    { name: "Caixa", href: "/caixa", icon: WalletCards },
+    { name: "Clientes", href: "/clientes", icon: Search },
 ];
 
 export function MobileNav({ role }: { role?: string }) {
