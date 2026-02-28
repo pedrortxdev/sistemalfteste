@@ -129,7 +129,7 @@ export async function getAuditLogs() {
     throw new Error("Acesso restrito ao Dono");
   }
 
-  return await prisma.auditLog.findMany({
+  const logs = await prisma.auditLog.findMany({
     include: {
       user: {
         select: { name: true, email: true }
@@ -140,4 +140,9 @@ export async function getAuditLogs() {
     },
     take: 100 // Limitar aos últimos 100 logs para performance
   });
+
+  return logs.map(log => ({
+    ...log,
+    timestamp: log.timestamp.toISOString()
+  }));
 }
