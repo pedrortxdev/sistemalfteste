@@ -5,7 +5,19 @@ export const authConfig = {
         signIn: "/login",
     },
     callbacks: {
-        jwt({ token, user, trigger, session }) {
+        authorized({ auth, request: { nextUrl } }) {
+            const isLoggedIn = !!auth?.user;
+            const isOnDashboard = nextUrl.pathname !== "/login";
+            
+            if (isOnDashboard) {
+                if (isLoggedIn) return true;
+                return false; // Redireciona para o login
+            } else if (isLoggedIn) {
+                return Response.redirect(new URL("/dashboard", nextUrl));
+            }
+            return true;
+        },
+        jwt({ token, user }) {
             if (user) {
                 token.role = user.role;
                 token.cityId = user.cityId;
@@ -23,5 +35,5 @@ export const authConfig = {
             return session;
         },
     },
-    providers: [], // configurado no auth.ts para não quebrar o Edge Runtime
+    providers: [], // configurado no auth.ts
 } satisfies NextAuthConfig;
